@@ -8,8 +8,8 @@ ROGUE supports implants on Linux laptops, Raspberry Pi, Termux (Android), iOS en
 ROGUE is a private repository. To clone it via SSH, first ensure your SSH key is registered with your GitHub account. Then from your Kali system, run:
 
 ```bash
-git clone git@github.com:your-username/ROGUE.git
-cd ROGUE
+git clone git@github.com:your-username/rogue.git
+cd rogue
 ```
 
 ## install dependencies manually:
