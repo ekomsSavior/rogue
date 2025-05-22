@@ -74,3 +74,21 @@ def connect():
             time.sleep(5)
 
 connect()
+
+def p2p_fallback_listener():
+    peer_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    peer_sock.bind(('0.0.0.0', 7007))
+    while True:
+        data, addr = peer_sock.recvfrom(1024)
+        if data.decode() == "Rogue?":
+            peer_sock.sendto(b"I'm Rogue", addr)
+
+def p2p_broadcast_ping():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.sendto(b"Rogue?", ('<broadcast>', 7007))
+
+# Launch in new threads
+threading.Thread(target=p2p_fallback_listener, daemon=True).start()
+threading.Thread(target=p2p_broadcast_ping, daemon=True).start()
+
