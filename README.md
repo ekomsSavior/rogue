@@ -1,14 +1,14 @@
 # r0gue
 
-ROGUE is a private, manually-deployed peer-to-peer and command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable. 
+ROGUE is a manually-deployed peer-to-peer and command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable. 
 ROGUE supports implants on Linux laptops, Raspberry Pi, Termux (Android), iOS environments.
 
 ## Installation
 
-ROGUE is a private repository. To clone it via SSH, first ensure your SSH key is registered with your GitHub account. Then from your Kali system, run:
+To clone ROGUE from your Kali system, run:
 
 ```bash
-git clone git@github.com:your-username/rogue.git
+git clone https://github.com/ekomsSavior/rogue.git
 cd rogue
 ```
 
