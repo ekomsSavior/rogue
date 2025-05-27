@@ -123,7 +123,7 @@ nc -lvnp 9001
 
 ## Maintaining Bots
 
-- ROGUE implants require Python 3 and internet/network access
+- ROGUE implants require Python3 and internet/network access
 - Ensure `rogue_c2.py` is running to accept bot connections
 - Keep your `payloads/` server online and accessible
 - Update your payloads regularly for improved capabilities or evasion
