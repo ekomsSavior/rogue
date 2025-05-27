@@ -145,8 +145,10 @@ nc -lvnp 9001
   - UDP flood to arbitrary ports
   - TCP SYN flood
 - CLI-style arguments allow flexible targeting from C2
-
-More payloads are planned including webcam capture, file exfiltration, and advanced automation.
+- Tor Benefits in DDoS Mode
+  - IP obfuscation via exit nodes
+  - Makes attribution and detection harder during stress testing
+  - Compatible with all http, tcp, and udp flood types
 
 ---
 
