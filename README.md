@@ -47,7 +47,7 @@ python3 rogue_c2.py
 ### Deploy a Bot Implant
 
 1. Copy `rogue_implant.py` to the target device.
-2. Edit the `C2_HOST` variable in the script to match your controller’s IP.
+2. Edit the `C2_HOST` and `PAYLOAD_REPO` variable in the script to match your controller’s IP.
 3. Run the implant:
 
 ```bash
