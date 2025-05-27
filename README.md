@@ -36,6 +36,8 @@ sudo apt install  python3-pycryptodome
 
 ## Usage
 
+- Before you start, create a 16 byte key, save it and modify your rogue_c2.py and rogue_implant.py to reflect your 16 byte key across all devices connected to the botnet.
+
 ### Start the C2 Server
 
 On your Kali controller machine:
