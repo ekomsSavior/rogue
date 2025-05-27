@@ -1,7 +1,7 @@
 # r0gue
 
 ROGUE is a manually-deployed peer-to-peer and command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
-ROGUE supports implants on Linux laptops, Raspberry Pi, Termux (Android), and iOS environments.
+ROGUE supports implants on Linux, Raspberry Pi, Termux (Android), and iOS environments.
 
 ---
 
