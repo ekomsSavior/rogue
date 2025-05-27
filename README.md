@@ -137,6 +137,8 @@ nc -lvnp 9001
 - Real CPU-based Monero miner
 - Supports pool config, wallet input, and resource throttling
 - Threaded hashing with runtime duration control
+- Cakewallet supports xmr MONERO. edit your mine.py with your XMR MONERO address
+  https://cakewallet.com/
 
 ### `ddos.py`
 
