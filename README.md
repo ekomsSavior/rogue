@@ -255,22 +255,25 @@ GhostTunnel – A more advanced domain fronting tunneler: https://github.com/sen
 
 Examples & Tools:
 
- Namecheap or Njalla – Register a domain and use dynamic DNS APIs to rotate IPs.
+	 Namecheap or Njalla – Register a domain and use dynamic DNS APIs to rotate IPs.
  
- DuckDNS or No-IP – Free dynamic DNS services you can abuse for flux-like behavior. https://duckdns.org, https://noip.com
+ 	DuckDNS or No-IP – Free dynamic DNS services you can abuse for flux-like behavior. https://duckdns.org, https://noip.com
  
- Fluxion or Custom Scripts – Use cronjobs or scripts that auto-update DNS records with nsupdate or provider APIs every few minutes.
+ 	Fluxion or Custom Scripts – Use cronjobs or scripts that auto-update DNS records with nsupdate or provider APIs every few minutes.
  
- Botnet-like CDN Rotation – Advanced: deploy C2 proxies across multiple bot-infected hosts and use a DNS script to cycle which one answers.
+ 	Botnet-like CDN Rotation – Advanced: deploy C2 proxies across multiple bot-infected hosts and use a DNS script to cycle which one answers.
 
  Tor Hidden Services: Host your C2 server as a Tor hidden service to anonymize its location.
 
 ## Integrating Alternative Communication Channels
 
 Diversify C2 communication methods:
-	•	Discord Webhooks: Utilize Discord’s webhook feature to send and receive commands or data.
-	•	Email Protocols: Implement SMTP or IMAP protocols for command dissemination.
-	•	Social Media Platforms: Leverage platforms like Twitter or Reddit for command and control by monitoring specific posts or messages.
+	
+ 	•	Discord Webhooks: Utilize Discord’s webhook feature to send and receive commands or data.
+	
+ 	•	Email Protocols: Implement SMTP or IMAP protocols for command dissemination.
+	
+ 	•	Social Media Platforms: Leverage platforms like Twitter or Reddit for command and control by monitoring specific posts or messages.
  
 ## Enhancing Payload Encryption
 
@@ -303,11 +306,11 @@ Obfuscation Tip: Host encrypted commands and decode before executing.
 
 -Discord Bot Polling
 
- Bots fetch commands from a Discord channel via a bot token:
+	 Bots fetch commands from a Discord channel via a bot token:
 
- Use a private channel for commands like mine now, ddos 1.1.1.1
+ 	Use a private channel for commands like mine now, ddos 1.1.1.1
 
- parse messages using discord.py
+ 	parse messages using discord.py
 
 -Pastebin / GitHub Raw / Tor .onion Links
 
