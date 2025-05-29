@@ -263,7 +263,7 @@ Examples & Tools:
  
  Botnet-like CDN Rotation – Advanced: deploy C2 proxies across multiple bot-infected hosts and use a DNS script to cycle which one answers.
 
-## Tor Hidden Services: Host your C2 server as a Tor hidden service to anonymize its location.
+ Tor Hidden Services: Host your C2 server as a Tor hidden service to anonymize its location.
 
 ## Integrating Alternative Communication Channels
 
