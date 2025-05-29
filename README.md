@@ -328,6 +328,8 @@ Signed Command Files: Validate instructions to prevent hijacking.
 
 Stealth Control Loop: Use sleep + jitter to avoid detection while polling.
 
+Add support for windows enviroments.
+
 Disclaimer: These enhancements are intended for educational and research purposes only. 
 Unauthorized use of such techniques can be illegal and unethical. 
 Users are responsible for ensuring compliance with all applicable laws and regulations.
