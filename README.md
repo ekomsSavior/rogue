@@ -2,8 +2,8 @@
 
 ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
 ROGUE supports implants on Linux, Raspberry Pi, Termux (Android), and iOS environments. 
-This botnet is intended as a lerning tool for the user.
-use your leet hacker skills to make this botnet more verbose.
+This botnet is intended as a learning tool for the user it comes with real-world ideas and examples to inspire tinkering, experimentation, and growth. 
+Have fun.
 
 ---
 
