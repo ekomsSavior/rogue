@@ -221,7 +221,7 @@ Do not deploy ROGUE on any device, network, or system you do not own or have exp
 
 Rogue is a modular Command and Control (C2) framework designed for educational purposes. While it provides a foundational setup, users can enhance its capabilities to better understand advanced botnet operations. Below are some suggestions:
 
-1. Obfuscating the C2 Server
+##Obfuscating the C2 Server
 
 Hosting a C2 server locally can expose your IP address. To mitigate this:
 	•	Use Redirectors: Deploy intermediary servers that forward traffic to your main C2 server, masking its true location.
