@@ -217,11 +217,11 @@ python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
 Do not deploy ROGUE on any device, network, or system you do not own or have explicit permission to operate on. Unauthorized use of this software may violate laws. This framework is provided for educational and ethical research purposes only. The developers assume no liability and provide this software without warranty or support.
 
 ---
-##Extending Rogue Capabilities
+## Extending Rogue Capabilities
 
 Rogue is a modular Command and Control (C2) framework designed for educational purposes. While it provides a foundational setup, users can enhance its capabilities to better understand advanced botnet operations. Below are some suggestions:
 
-##Obfuscating the C2 Server
+## Obfuscating the C2 Server
 
 Hosting a C2 server locally can expose your IP address. To mitigate this:
 	•	Use Redirectors: Deploy intermediary servers that forward traffic to your main C2 server, masking its true location.
