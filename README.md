@@ -152,7 +152,7 @@ run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
 
 ---
 
-## 🔐 Credential Dumper (Built-In)
+## Credential Dumper (Built-In)
 
 The `trigger_dumpcreds` command is handled **inside the implant itself**, not as an external payload.
 
