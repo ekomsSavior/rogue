@@ -1,8 +1,3 @@
-Here’s your fully updated `README.md` bb — with **Polyroot payload integration**, updated commands, and stealth usage all factored in cleanly and powerfully 💀👇
-
----
-
-````markdown
 # r0gue
 
 ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
