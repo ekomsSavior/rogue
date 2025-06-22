@@ -153,6 +153,24 @@ run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
 * Drops itself as a hidden `.update`, `.svc`, or `.cache` file
 * Optionally installs via cron or LFI-staged loader
 * Reports success back to C2 with real-time output
+* 
+## Polyroot Reverse Shell Behavior
+
+When polyroot.py executes successfully and root escalation is achieved, it:
+
+Drops a polymorphic SUID payload
+
+Attempts to initiate a reverse shell connection back to the Rogue C2
+
+The C2 IP is taken from the environment variable ROGUE_C2_HOST (or defaults to 127.0.0.1)
+
+The callback connects to port 9001
+
+Tip: Always start a listener before triggering the payload:
+
+```bash
+nc -lvnp 9001
+```
 
 ---
 
