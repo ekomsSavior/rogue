@@ -220,7 +220,7 @@ When `polyroot.py` executes successfully and root escalation is achieved, it:
 
 * Drops a polymorphic SUID payload
   
-* Attempts to initiate a reverse shell connection back to the Rogue C2
+* Attempts to initiate a root reverse shell connection back to the Rogue C2
 
 The C2 IP is taken from the environment variable `ROGUE_C2_HOST` (or defaults to `127.0.0.1`)
 
