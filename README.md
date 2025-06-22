@@ -209,8 +209,7 @@ python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
   - IP obfuscation via exit nodes
   - Makes attribution and detection harder during stress testing
   - Compatible with all http, tcp, and udp flood types
-
----
+ -  Optional Continuous mode (infinite loop)
 
 ## Disclaimer
 
