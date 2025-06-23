@@ -289,7 +289,7 @@ Best served over port 8000 like other payloads.
 * Evades detection with polymorphic obfuscation
 * Can persist with cron
 * Optional `.update` or `.svc` stealth names
-* Ready for future LFI injection and USB payload chains
+* Ready for future USB payload chains
 
 ---
 
