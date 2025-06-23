@@ -7,14 +7,17 @@ POOL = "pool.supportxmr.com"
 PORT = 3333
 THREADS = 2
 THROTTLE = 0.1  # Delay per hash, lower = more aggressive
-DURATION = 120  # seconds
 
 def get_job(sock):
     while True:
-        data = sock.recv(4096).decode()
-        for line in data.split("\n"):
-            if "job" in line:
-                return json.loads(line)
+        try:
+            data = sock.recv(4096).decode()
+            for line in data.strip().split("\n"):
+                if "job" in line:
+                    return json.loads(line)
+        except Exception as e:
+            print(f"[!] Error receiving job: {e}")
+            time.sleep(5)
 
 def submit_share(sock, job_id, nonce, result):
     sub = {
@@ -27,7 +30,10 @@ def submit_share(sock, job_id, nonce, result):
             "result": result
         }
     }
-    sock.send((json.dumps(sub) + "\n").encode())
+    try:
+        sock.send((json.dumps(sub) + "\n").encode())
+    except:
+        pass  # Ignore broken pipe or timeout
 
 def connect_stratum():
     s = socket.socket()
@@ -44,41 +50,47 @@ def connect_stratum():
     s.send((json.dumps(login) + "\n").encode())
     return s
 
-def mine(job_data, duration):
-    blob = job_data['result']['job']['blob']
-    job_id = job_data['result']['job']['job_id']
-    target = int(job_data['result']['job']['target'], 16)
+def mine_loop():
+    while True:
+        try:
+            sock = connect_stratum()
+            job_data = get_job(sock)
+            job = job_data['result']['job']
+            blob = job['blob']
+            job_id = job['job_id']
+            target = int(job['target'], 16)
 
-    start = time.time()
-    hashes = 0
+            print(f"[+] New job received. Starting mining thread.")
+            hashes = 0
 
-    while time.time() - start < duration:
-        nonce = format(random.randint(0, 99999999), '08x')
-        base = blob[:78] + nonce + blob[86:]
-        hash_result = hashlib.sha256(bytes.fromhex(base)).hexdigest()
-        hashes += 1
+            while True:
+                nonce = format(random.randint(0, 99999999), '08x')
+                base = blob[:78] + nonce + blob[86:]
+                hash_result = hashlib.sha256(bytes.fromhex(base)).hexdigest()
+                hashes += 1
 
-        if int(hash_result, 16) < target:
-            print(f"[+] Found share: {hash_result[:16]}")
-            submit_share(sock, job_id, nonce, hash_result)
+                if int(hash_result, 16) < target:
+                    print(f"[✓] Share accepted: {hash_result[:16]}")
+                    submit_share(sock, job_id, nonce, hash_result)
+                    break  # get new job after submission
 
-        time.sleep(THROTTLE)
+                time.sleep(THROTTLE)
 
-    print(f"[+] Thread complete – {hashes} hashes attempted.")
+        except Exception as e:
+            print(f"[!] Miner thread error: {e}")
+            time.sleep(10)  # reconnect delay
 
 if __name__ == "__main__":
-    print("👑 Rogue Miner – Connecting to pool...")
-    sock = connect_stratum()
-    job = get_job(sock)
-
+    print("👑 RogueMiner: Continuous Mining Enabled")
     threads = []
     for i in range(THREADS):
-        t = threading.Thread(target=mine, args=(job, DURATION))
+        t = threading.Thread(target=mine_loop)
         t.daemon = True
         t.start()
         threads.append(t)
 
-    for t in threads:
-        t.join()
-
-    print("[*] Mining session complete.")
+    try:
+        while True:
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print("\n[!] Mining interrupted by user.")
