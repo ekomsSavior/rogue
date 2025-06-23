@@ -124,6 +124,7 @@ nc -lvnp 9001
 
 ```text
 trigger_mine
+trigger_stopmine
 trigger_ddos
 trigger_polyroot
 trigger_exfil <default|deep|/path>
