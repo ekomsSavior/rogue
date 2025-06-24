@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import socket, threading, random, time, sys, ssl
 import socks  # PySocks for Tor support
 
