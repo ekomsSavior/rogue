@@ -291,9 +291,12 @@ Best served over port 8000 like other payloads.
 
 ### `ddos.py`
 
-* Supports HTTP, TCP SYN, UDP
-* Includes Tor routing (set `USE_TOR = True`) see steps below for tor instructions.
-* Threaded with flood duration control
+* Supports **7 attack modes**: `http`, `tls`, `head`, `ws`, `udp`, `tcp`, `slowpost`
+* Includes `combo` mode: launches all floods simultaneously for maximum disruption
+* Optional `--loop` flag to keep attacks running until interrupted
+* Uses stealth HTTP headers and randomized payloads
+* Supports optional Tor routing (`USE_TOR = True`) for anonymized C2 traffic
+* Threaded with per-method control over duration and concurrency
 
 ### `polyroot.py`
 
