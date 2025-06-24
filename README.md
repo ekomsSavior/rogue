@@ -134,22 +134,34 @@ trigger_dumpcreds
 These will instruct all bots to fetch and execute the specified payload or internal logic automatically.
 
 ---
-
-### Manual Example
+### Command Syntax for `ddos.py` 
 
 ```bash
-run_payload ddos.py trigger_ddos 192.168.0.99 80 60 150 http
+Usage: ddos.py <ip> <port> <duration> <threads> <mode> [--loop]
 ```
 
----
+####  Arguments:
 
-### DDoS Modes
+* `ip` – Target IP or domain 
+* `port` – Target port
+* `duration` – Time in seconds each round of attack lasts
+* `threads` – Number of threads per method
+* `mode` – Attack method
+* `--loop` – (optional) Infinite loop mode, runs attack until interrupted
 
-| Mode | Description     |
-| ---- | --------------- |
-| http | HTTP GET flood  |
-| udp  | UDP packet spam |
-| tcp  | TCP SYN flood   |
+####  Supported Modes:
+
+| Mode       | Description                              |
+| ---------- | ---------------------------------------- |
+| `http`     | HTTP GET flood with stealth headers      |
+| `tls`      | TLS handshake flood (SSL layer overload) |
+| `head`     | HEAD request spam to consume socket time |
+| `ws`       | WebSocket upgrade request spam           |
+| `udp`      | High-speed random UDP payloads           |
+| `tcp`      | TCP SYN connection spam                  |
+| `slowpost` | Slow POST (R-U-Dead-Yet / RUDY attack)   |
+| `combo`    |   **All of the above simultaneously**    |
+
 
 ---
 
