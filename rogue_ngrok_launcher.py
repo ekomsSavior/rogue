@@ -5,7 +5,7 @@ import os
 import requests
 import threading
 
-NGROK_AUTH_TOKEN = "your-ngrok-auth-token"  # ⛔️ Replace this with your actual token
+NGROK_AUTH_TOKEN = "your-ngrok-auth-token"  #  Replace this with your auth token
 PAYLOAD_PORT = 8000
 NGROK_API = "http://127.0.0.1:4040/api/tunnels"
 C2_FILE = "rogue_c2.py"
