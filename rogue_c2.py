@@ -5,7 +5,7 @@ from Cryptodome.Cipher import AES
 from datetime import datetime
 
 SECRET_KEY = b'Sixteen byte key'
-EXFIL_DECRYPT_KEY = b'TrinityRogueKey!'
+EXFIL_DECRYPT_KEY = b'magicRogueKey!'
 PORT = 4444
 EXFIL_PORT = 9090
 clients = []
