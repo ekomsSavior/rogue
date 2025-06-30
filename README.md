@@ -108,7 +108,7 @@ This ensures encrypted payload and exfil transfer.
 NEW! Use the new ngrok loader:
 
 ```bash
-python3 ngrok_loader.py
+python3 rogue_ngrok_launcher.py
 ```
 
 It will:
