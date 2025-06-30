@@ -72,6 +72,7 @@ Check it:
 ```bash
 sudo systemctl status tor@default
 ```
+`press q to exit
 
 ---
 
