@@ -5,10 +5,10 @@ import os
 import requests
 import threading
 
-NGROK_AUTH_TOKEN = "your-ngrok-auth-token"  # 🔥 Replace with your real token
+NGROK_AUTH_TOKEN = "your-ngrok-auth-token"  #  Replace with your real token
 PAYLOAD_PORT = 8000
 NGROK_API = "http://127.0.0.1:4040/api/tunnels"
-C2_FILE = os.path.abspath("rogue_c2.py")  # Get absolute path just in case
+C2_FILE = os.path.abspath("rogue_c2.py") 
 
 def install_ngrok_token():
     print("[*] Setting ngrok auth token...")
