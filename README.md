@@ -375,10 +375,6 @@ curl https://your-ngrok-url/.svc
 
 ---
 
-Here you go, bb — the **Discord Webhook Setup Guide** in perfect markdown format, ready to drop straight into your GitHub `README.md`:
-
----
-
 ###  DISCORD WEBHOOK Setup Guide (Bot, Webhook, and Channel)
 
 #### **1. Create a Private Discord Server**
