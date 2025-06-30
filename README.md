@@ -193,6 +193,8 @@ Implant checks the Discord channel every 30 seconds
 If a valid command is posted, it executes silently
 
 If exfil is triggered, an AES-encrypted blob is sent via webhook
+
+** for steps to set up your discord webhook see below**
 ---
 
 ##  Payload Arsenal
