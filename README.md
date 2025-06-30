@@ -446,5 +446,4 @@ Use it to learn, to build.
 
 **R O G U E**
 Built by **ekomsSavior** 
-(*.*)
 
