@@ -107,6 +107,14 @@ This ensures encrypted payload and exfil transfer.
 
 NEW! Use the new ngrok loader:
 
+quick tip: if you have a paid NGROK account use the toggle in the  ngrok loader script. edit this line:
+
+```bash
+USE_NGROK_TCP = True         # ← Paid user toggle: True = use TCP for C2, False = http payloads only
+```
+
+then launch the loader.
+
 ```bash
 python3 rogue_ngrok_launcher.py
 ```
