@@ -93,11 +93,11 @@ python3 rogue_implant.py
 
 ### Accessing the Control Panel
 After starting the C2 server, ACCESS THE WEB INTERFACE at:
+
 ```
 http://localhost:4444/admin
-```![IMG_0822](https://github.com/user-attachments/assets/3b6dc85c-e785-4235-88fa-8f35cdc7acf2)
-
-![IMG_0824](https://github.com/user-attachments/assets/586a9f51-b0e4-4f52-8d40-784cdde3016f)
+```
+![IMG_0824](https://github.com/user-attachments/assets/d0afdf9c-c2d5-40e4-af79-cf705c5a3549)
 
 ### GUI Features
 - **Real-time Bot Monitoring** - View all connected implants
@@ -111,6 +111,8 @@ http://localhost:4444/admin
 2. **Send Commands** - Use the command forms to execute shell commands or trigger payloads
 3. **Monitor Results** - View command outputs in the results section
 4. **Manage Payloads** - Access payload repository from the server status section
+
+![IMG_0822](https://github.com/user-attachments/assets/55170877-90c7-4c20-9dce-771d9a24fb85)
 
 ---
 
