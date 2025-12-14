@@ -56,23 +56,6 @@ sudo mv ngrok /usr/local/bin/
 
 ngrok config add-authtoken YOUR_AUTH_TOKEN
 ```
-
----
-
-## Architecture
-
-```
-rogue/
-├── rogue_c2.py              # C2 Server (Flask + AES Encryption)
-├── rogue_implant.py         # Bot Implant
-├── payloads/                # Modular payloads
-│   ├── polyloader.py       # Privilege escalation
-│   ├── ddos.py            # DDoS module
-│   ├── mine.py            # Crypto miner
-│   └── ...                # Additional payloads
-└── README.md
-```
-
 ---
 
 ## Quick Start
@@ -106,11 +89,15 @@ python3 rogue_implant.py
 
 ## Web GUI Administration
 
+
+
 ### Accessing the Control Panel
-After starting the C2 server, access the web interface at:
+After starting the C2 server, ACCESS THE WEB INTERFACE at:
 ```
 http://localhost:4444/admin
-```
+```![IMG_0822](https://github.com/user-attachments/assets/3b6dc85c-e785-4235-88fa-8f35cdc7acf2)
+
+![IMG_0824](https://github.com/user-attachments/assets/586a9f51-b0e4-4f52-8d40-784cdde3016f)
 
 ### GUI Features
 - **Real-time Bot Monitoring** - View all connected implants
