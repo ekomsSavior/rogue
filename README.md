@@ -98,6 +98,9 @@ After starting the C2 server, ACCESS THE WEB INTERFACE at:
 http://localhost:4444/admin
 ```
 
+![IMG_0824(1)](https://github.com/user-attachments/assets/ce6b60e8-294c-444b-95b0-130379f7a96b)
+
+
 ### GUI Features
 - **Real-time Bot Monitoring** - View all connected implants
 - **Command Queue Management** - Send commands to individual or all bots
