@@ -328,3 +328,7 @@ This tool is for:
 ---
   
 For educational purposes only. Use responsibly.
+
+<img width="1151" height="1360" alt="roguerogue" src="https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520" />
+
+
