@@ -65,6 +65,9 @@ ngrok config add-authtoken YOUR_AUTH_TOKEN
 python3 rogue_c2.py
 ```
 
+![IMG_0827](https://github.com/user-attachments/assets/b7c4a6a9-f920-427b-8860-1de9fb3368e9)
+
+
 The server will:
 - Start ngrok HTTPS tunnel
 - Launch Flask C2 on port 4444
@@ -80,10 +83,14 @@ PAYLOAD_REPO = "https://your-ngrok-subdomain.ngrok-free.dev/payloads/"
 ```
 
 ### 3. Deploy Implant
+
 Run on target system:
 ```bash
 python3 rogue_implant.py
 ```
+
+![IMG_0828](https://github.com/user-attachments/assets/e280f8e8-a198-4f9e-85fc-47aad4813b1a)
+
 
 ---
 
