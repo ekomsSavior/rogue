@@ -62,7 +62,7 @@ ngrok config add-authtoken YOUR_AUTH_TOKEN
 
 ## Quick Start
 
-### 1. Start C2 Server
+### 1. Start C2 Server ( IMPORTANT: For optimal operation, run the C2 server on a separate machine or VPS from your implants)
 ```bash
 python3 rogue_c2.py
 ```
