@@ -258,6 +258,43 @@ BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 
 ---
 
+---
+
+## Emergency Removal Guide just in case 
+
+### If You Need to Remove Rogue From a System
+
+#### One-Liner Emergency Remove & Verify:
+```bash
+sudo pkill -9 -f rogue && sudo rm -rf ~/.cache/.rogue && \
+sed -i '/ROGUE\|rogue_agent\|systemd-journald/d' ~/.bashrc ~/.profile ~/.bash_profile && \
+echo "✓ Removed" && sleep 2 && ps aux | grep -E "rogue|\.rogue" | grep -v grep || echo "✓ Clean!"
+```
+
+#### Quick Kill Command (Run as root or with sudo):
+```bash
+# Stop all Rogue processes and remove persistence
+sudo pkill -9 -f "rogue_implant.py" && \
+sudo pkill -9 -f ".rogue_agent.py" && \
+sudo pkill -9 -f "systemd-journald" && \
+sed -i '/ROGUE_LAUNCHED/d; /rogue_agent.py/d; /systemd-journald/d' ~/.bashrc ~/.profile ~/.bash_profile && \
+echo "[+] Rogue processes terminated and persistence removed"
+```
+
+#### Verify Removal:
+```bash
+# Check if any Rogue processes are still running
+ps aux | grep -E "(rogue|\.rogue_agent|rogue_implant)" | grep -v grep
+
+# Check for hidden directory
+ls -la ~/.cache/.rogue/ 2>/dev/null && echo "WARNING: Hidden directory still exists!"
+
+# Check persistence files
+grep -n "ROGUE\|rogue_agent\|systemd-journald" ~/.bashrc ~/.profile ~/.bash_profile 2>/dev/null
+```
+---
+---
+
 ## Targeting & Deployment
 
 ### Linux Systems
