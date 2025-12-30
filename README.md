@@ -121,8 +121,6 @@ done
 
 ##  Web Interface Guide
 
-![IMG_1038](https://github.com/user-attachments/assets/68ce8029-3366-49a2-97e9-74e462274015)
-
 ### **Access Control Panel**
 ```
 http://localhost:4444/admin
@@ -135,6 +133,8 @@ http://localhost:4444/admin
 - Send commands to individual bots
 - Monitor command results and pending queues
 - Color-coded status indicators (green = active)
+
+![IMG_1038](https://github.com/user-attachments/assets/68ce8029-3366-49a2-97e9-74e462274015)
 
 #### **Tab 2: Operations**
 **Reconnaissance & Intelligence**
