@@ -121,6 +121,8 @@ done
 
 ##  Web Interface Guide
 
+![IMG_1038](https://github.com/user-attachments/assets/68ce8029-3366-49a2-97e9-74e462274015)
+
 ### **Access Control Panel**
 ```
 http://localhost:4444/admin
