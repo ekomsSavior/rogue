@@ -31,12 +31,6 @@ ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed f
 
 ## Installation & Setup
 
-### **System Requirements**
-- Python 3.8+
-- Linux/Unix-based systems (primary focus)
-- 2GB RAM minimum, 4GB recommended
-- Internet connection for ngrok tunneling
-
 ### **Clone Repository**
 ```bash
 git clone https://github.com/ekomsSavior/rogue.git
@@ -49,16 +43,15 @@ cd rogue
 sudo apt update
 sudo apt install python3 python3-pip python3-dev python3-venv -y
 
-# Create virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate
 
 # Install Python packages
-pip3 install pycryptodome flask requests psutil setproctitle netifaces
+pip3 install pycryptodome flask requests psutil setproctitle netifaces --break-system-packages
 
 # Optional dependencies for enhanced payloads
-pip3 install paramiko pynput pyautogui python-nmap secretstorage
+pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-packags
 ```
+if you dont want to run break system packages use a VENV and do it from there.
+
 
 ### **Ngrok Setup**
 ```bash
@@ -73,7 +66,7 @@ ngrok config add-authtoken YOUR_NGROK_AUTH_TOKEN
 
 ---
 
-## 🏁 Quick Start Guide
+##  Quick Start Guide
 
 ### **1. Start C2 Server** (Control Center)
 ```bash
