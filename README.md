@@ -349,7 +349,7 @@ trigger_dnstunnel       # Start DNS tunneling
 
 ---
 
-## 🔧 Configuration Files for Lateral Movement
+##  Configuration Files for Lateral Movement
 
 ### **Purpose**
 These files are used by the **SSH credential sprayer (`sshspray.py`)** and **auto-deploy (`autodeploy.py`)** payloads for automated lateral movement and network propagation.
