@@ -336,6 +336,8 @@ trigger_logclean all    # Aggressive system log cleaning
 
 ### **Advanced Payloads (NEW)**
 
+![IMG_1091](https://github.com/user-attachments/assets/f6b7a111-c9f1-41de-aa47-487161919b6c)
+
 #### **Process Injection** (`process_inject.py`)
 ```bash
 trigger_procinject
