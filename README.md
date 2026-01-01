@@ -56,11 +56,11 @@ pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-
 
 ```
 
-**Note:** If you don't want to use `--break-system-packages`, use a virtual environment:
+**Note:** If you don't want to use `--break-system-packages`, make a venv and do it from there:
 ```bash
 python3 -m venv rogue_env
 source rogue_env/bin/activate
-pip3 install pycryptodome flask requests psutil setproctitle netifaces paramiko pynput
+pip3 install pycryptodome flask requests psutil setproctitle netifaces paramiko pynput pyautogui python-nmap secretstorage --break-system-packages
 ```
 
 ### **Ngrok Setup**
