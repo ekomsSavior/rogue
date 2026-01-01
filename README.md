@@ -54,8 +54,6 @@ pip3 install pycryptodome flask requests psutil setproctitle netifaces --break-s
 # Optional dependencies for enhanced payloads
 pip3 install paramiko pynput pyautogui python-nmap secretstorage --break-system-packages
 
-# File Encryption Dependencies (REQUIRED for fileransom.py)
-pip3 install pycryptodome --break-system-packages
 ```
 
 **Note:** If you don't want to use `--break-system-packages`, use a virtual environment:
