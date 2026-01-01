@@ -255,6 +255,9 @@ trigger_dumpcreds       # Dump credentials from common locations
 - **Competitor Cleaner** - Identify and remove other malware, botnets, and competitor implants
 - Advanced operations console for elite payloads
 
+![IMG_1087](https://github.com/user-attachments/assets/0943d45e-1202-4257-a2d0-cfe7fc38bc55)
+
+
 #### **Tab 5: Results**
 - Command execution history
 - Timestamped results
