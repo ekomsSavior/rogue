@@ -276,7 +276,6 @@ http://localhost:4444/admin
 - **Advanced Payloads Section** - Quick access to new capabilities
 
 #### **Tab 2: Operations**
-**(All previous operations plus cloud commands)**
 
 **Cloud-Aware Operations (NEW):**
 ```bash
