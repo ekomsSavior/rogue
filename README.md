@@ -1,14 +1,11 @@
 # ROGUE - Botnet w/ Integrated C2 v3.2
 
-
 ![ek0ms Banner](https://img.shields.io/badge/ek0ms-certified_ethcial_hacker-blue)
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
+**ROGUE** v3.2 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, cloud-awareness, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
 ## !Disclaimer: This tool is provided for educational purposes. Only use on systems you own or have written permission to test on.
-
-ROGUE v3.2 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, cloud-awareness, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
-
 ---
 
 ## What's New in v3.2
@@ -1095,13 +1092,12 @@ Users must:
 5. Only test cloud environments you own or have written permission to test
 6. Comply with all cloud provider terms of service
 ```
-
-![rogue](https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520)
-
 ---
 *Last Updated: v3.2 | For authorized security testing only*  
 **CLOUD EXPLOITATION: Use only on cloud environments you own or have explicit permission to test**  
 **FILE ENCRYPTION: Use with extreme caution in isolated environments only**  
+---
+![rogue](https://github.com/user-attachments/assets/d8c0e482-efa0-4f43-86dc-bf8e15505520)
 
 ![image0(1)](https://github.com/user-attachments/assets/0a84dbd2-5028-40e9-ae8d-fc046114b94f)
 
