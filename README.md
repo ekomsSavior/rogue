@@ -1,6 +1,7 @@
-I'll help you update the README with the new cloud integration and awareness features. Here's the updated version:
-
 # ROGUE - Botnet w/ Integrated C2 v3.2
+
+
+![ek0ms Banner](https://img.shields.io/badge/ek0ms-certified_ethcial_hacker-blue)
 
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
