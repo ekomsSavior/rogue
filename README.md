@@ -5,7 +5,7 @@
 ![rogue banner](https://github.com/user-attachments/assets/7dd2e5a3-398a-4487-a46b-541673b0f3b3)
 
 **ROGUE** v3.2 is a comprehensive encrypted command-and-control framework designed for authorized penetration testing, red team operations, and incident response training. Featuring AES-256 encryption, web-based administration, cloud-awareness, and an extensive payload arsenal, ROGUE provides professional-grade capabilities for security testing.
-## !Disclaimer: This tool is provided for educational purposes. Only use on systems you own or have written permission to test on.
+## Disclaimer: This tool is provided for educational purposes. Only use on systems you own or have written permission to test on.
 ---
 
 ## What's New in v3.2
