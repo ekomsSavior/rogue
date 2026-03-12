@@ -152,7 +152,7 @@ sudo apt update
 sudo apt install python3 python3-pip python3-dev python3-venv -y
 
 # Install Python packages
-pip3 install pycryptodome flask requests psutil setproctitle netifaces paramiko pynput --break-system-packages
+pip3 install pycryptodomex flask requests psutil setproctitle netifaces paramiko pynput --break-system-packages
 
 # Optional for cloud features
 pip3 install boto3 azure-identity google-cloud-storage kubernetes --break-system-packages
